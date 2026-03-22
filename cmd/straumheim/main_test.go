@@ -8,9 +8,12 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/deepsky-data/straumheim/internal/buffer"
 	"github.com/deepsky-data/straumheim/internal/config"
+	"github.com/deepsky-data/straumheim/internal/metrics"
 	"github.com/deepsky-data/straumheim/internal/pipeline"
 	"github.com/deepsky-data/straumheim/internal/sink"
 )
@@ -72,10 +75,39 @@ func TestCreateSinksPostgresNoDSN(t *testing.T) {
 	}
 }
 
+func TestMetricsEndpoint(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	met := metrics.NewMetrics(reg)
+
+	// Trigger a metric so there's something to scrape.
+	met.RecordReceived("webhook")
+
+	r := chi.NewRouter()
+	r.Get("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}).ServeHTTP)
+
+	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	ct := w.Header().Get("Content-Type")
+	if !strings.Contains(ct, "text/plain") {
+		t.Fatalf("expected text/plain content type, got %s", ct)
+	}
+
+	body := w.Body.String()
+	if !strings.Contains(body, "straumheim_records_received_total") {
+		t.Fatalf("expected straumheim_ prefixed metrics in body, got:\n%s", body)
+	}
+}
+
 func TestRegisterInputs(t *testing.T) {
 	r := chi.NewRouter()
 	buf := buffer.NewMemoryBuffer(100, 10, 1000000000)
-	engine := pipeline.NewEngine(buf, []sink.Sink{})
+	engine := pipeline.NewEngine(buf, []sink.Sink{}, nil, nil)
 
 	inputs := map[string]config.InputConfig{
 		"webhook": {Enabled: true, Path: "/webhook"},
