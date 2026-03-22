@@ -1,0 +1,33 @@
+# Straumheim configuration
+# Environment variables can be referenced with ${VAR} syntax.
+
+server:
+  host: 0.0.0.0
+  port: 8080
+
+inputs:
+  webhook:
+    enabled: true
+    path: /webhook
+
+buffer:
+  type: memory          # memory (default)
+  capacity: 10000       # max buffered records
+  flush_interval: 5s    # flush after this duration
+  flush_count: 500      # flush after this many records
+
+sinks:
+  # Postgres sink — writes records via COPY batching with auto-schema.
+  - name: warehouse
+    type: postgres
+    mode: batch
+    dsn: ${POSTGRES_DSN}
+    table: events
+    batch_size: 1000
+    flush_interval: 10s
+    auto_schema: true
+
+  # Stdout sink — prints each record as a JSON line (useful for debugging).
+  - name: debug
+    type: stdout
+    mode: stream
