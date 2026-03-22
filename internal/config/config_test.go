@@ -117,6 +117,55 @@ server:
 	}
 }
 
+func TestLoadConfig_CORSDefaults(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "config.yaml")
+	data := `
+server:
+  host: 0.0.0.0
+`
+	if err := os.WriteFile(cfgPath, []byte(data), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := LoadConfig(cfgPath)
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+
+	if len(cfg.Server.CORS.AllowedOrigins) != 1 || cfg.Server.CORS.AllowedOrigins[0] != "*" {
+		t.Errorf("expected default CORS allowed_origins [*], got %v", cfg.Server.CORS.AllowedOrigins)
+	}
+}
+
+func TestLoadConfig_CORSConfigured(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "config.yaml")
+	data := `
+server:
+  host: 0.0.0.0
+  cors:
+    allowed_origins:
+      - https://example.com
+      - https://app.example.com
+`
+	if err := os.WriteFile(cfgPath, []byte(data), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := LoadConfig(cfgPath)
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+
+	if len(cfg.Server.CORS.AllowedOrigins) != 2 {
+		t.Errorf("expected 2 CORS allowed_origins, got %d", len(cfg.Server.CORS.AllowedOrigins))
+	}
+	if cfg.Server.CORS.AllowedOrigins[0] != "https://example.com" {
+		t.Errorf("expected first origin https://example.com, got %s", cfg.Server.CORS.AllowedOrigins[0])
+	}
+}
+
 func TestLoadConfig_FileNotFound(t *testing.T) {
 	_, err := LoadConfig("/nonexistent/path.yaml")
 	if err == nil {

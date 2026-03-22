@@ -4,6 +4,10 @@
 server:
   host: 0.0.0.0
   port: 8080
+  # CORS configuration for cross-origin tracker requests.
+  cors:
+    allowed_origins:
+      - "*"               # allow all origins (default); restrict in production
   # GET /metrics serves Prometheus text format metrics for pipeline health.
   # Scrape with Prometheus at http://<host>:<port>/metrics
 

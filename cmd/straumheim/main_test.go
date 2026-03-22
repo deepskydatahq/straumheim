@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,6 +11,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -279,4 +283,224 @@ func TestRegisterInputsPixel(t *testing.T) {
 	}
 
 	engine.Close()
+}
+
+// newTestRouterWithCORS creates a Chi router with CORS middleware configured with the given origins.
+func newTestRouterWithCORS(origins []string) *chi.Mux {
+	r := chi.NewRouter()
+	r.Use(middleware.Recoverer)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: origins,
+		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type"},
+	}))
+	r.Post("/webhook", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	r.Get("/health", healthHandler)
+	return r
+}
+
+func TestCORS_OptionsReturnsAllowOrigin(t *testing.T) {
+	r := newTestRouterWithCORS([]string{"https://example.com"})
+
+	req := httptest.NewRequest(http.MethodOptions, "/webhook", nil)
+	req.Header.Set("Origin", "https://example.com")
+	req.Header.Set("Access-Control-Request-Method", "POST")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	acao := w.Header().Get("Access-Control-Allow-Origin")
+	if acao != "https://example.com" {
+		t.Fatalf("expected Access-Control-Allow-Origin 'https://example.com', got %q", acao)
+	}
+}
+
+func TestCORS_OptionsReturnsAllowMethods(t *testing.T) {
+	r := newTestRouterWithCORS([]string{"https://example.com"})
+
+	// Verify each allowed method is accepted in a preflight request.
+	for _, method := range []string{"GET", "POST", "OPTIONS"} {
+		req := httptest.NewRequest(http.MethodOptions, "/webhook", nil)
+		req.Header.Set("Origin", "https://example.com")
+		req.Header.Set("Access-Control-Request-Method", method)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		acam := w.Header().Get("Access-Control-Allow-Methods")
+		if acam == "" {
+			t.Errorf("expected Access-Control-Allow-Methods for request method %s, got empty", method)
+		}
+	}
+}
+
+func TestCORS_OptionsReturnsAllowHeaders(t *testing.T) {
+	r := newTestRouterWithCORS([]string{"https://example.com"})
+
+	req := httptest.NewRequest(http.MethodOptions, "/webhook", nil)
+	req.Header.Set("Origin", "https://example.com")
+	req.Header.Set("Access-Control-Request-Method", "POST")
+	req.Header.Set("Access-Control-Request-Headers", "Content-Type")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	acah := w.Header().Get("Access-Control-Allow-Headers")
+	if !strings.Contains(strings.ToLower(acah), "content-type") {
+		t.Errorf("expected Access-Control-Allow-Headers to contain Content-Type, got %q", acah)
+	}
+}
+
+func TestCORS_WildcardAllowsAllOrigins(t *testing.T) {
+	r := newTestRouterWithCORS([]string{"*"})
+
+	req := httptest.NewRequest(http.MethodOptions, "/webhook", nil)
+	req.Header.Set("Origin", "https://any-site.example.org")
+	req.Header.Set("Access-Control-Request-Method", "POST")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	acao := w.Header().Get("Access-Control-Allow-Origin")
+	if acao != "*" {
+		t.Fatalf("expected Access-Control-Allow-Origin '*', got %q", acao)
+	}
+}
+
+func TestRecovery_PanicReturns500(t *testing.T) {
+	r := chi.NewRouter()
+	r.Use(middleware.Recoverer)
+	r.Get("/panic", func(w http.ResponseWriter, r *http.Request) {
+		panic("test panic")
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/panic", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", w.Code)
+	}
+}
+
+// captureHandler is a slog.Handler that captures log records for testing.
+type captureHandler struct {
+	records []slog.Record
+}
+
+func (h *captureHandler) Enabled(_ context.Context, _ slog.Level) bool { return true }
+func (h *captureHandler) Handle(_ context.Context, r slog.Record) error {
+	h.records = append(h.records, r)
+	return nil
+}
+func (h *captureHandler) WithAttrs(_ []slog.Attr) slog.Handler { return h }
+func (h *captureHandler) WithGroup(_ string) slog.Handler      { return h }
+
+func (h *captureHandler) findAttr(rec slog.Record, key string) (slog.Value, bool) {
+	var val slog.Value
+	var found bool
+	rec.Attrs(func(a slog.Attr) bool {
+		if a.Key == key {
+			val = a.Value
+			found = true
+			return false
+		}
+		return true
+	})
+	return val, found
+}
+
+func TestRequestLogger_LogsRequestFields(t *testing.T) {
+	ch := &captureHandler{}
+	logger := slog.New(ch)
+	slog.SetDefault(logger)
+
+	r := chi.NewRouter()
+	r.Use(requestLogger)
+	r.Post("/webhook", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/webhook", nil)
+	req.RemoteAddr = "192.168.1.1:12345"
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if len(ch.records) != 1 {
+		t.Fatalf("expected 1 log record, got %d", len(ch.records))
+	}
+
+	rec := ch.records[0]
+	if rec.Level != slog.LevelInfo {
+		t.Errorf("expected INFO level, got %v", rec.Level)
+	}
+
+	// Check method field.
+	if v, ok := ch.findAttr(rec, "method"); !ok || v.String() != "POST" {
+		t.Errorf("expected method=POST, got %v (found=%v)", v, ok)
+	}
+
+	// Check path field.
+	if v, ok := ch.findAttr(rec, "path"); !ok || v.String() != "/webhook" {
+		t.Errorf("expected path=/webhook, got %v (found=%v)", v, ok)
+	}
+
+	// Check status field.
+	if v, ok := ch.findAttr(rec, "status"); !ok || v.Int64() != 200 {
+		t.Errorf("expected status=200, got %v (found=%v)", v, ok)
+	}
+
+	// Check duration_ms field exists.
+	if _, ok := ch.findAttr(rec, "duration_ms"); !ok {
+		t.Error("expected duration_ms field in log record")
+	}
+
+	// Check remote_addr field.
+	if v, ok := ch.findAttr(rec, "remote_addr"); !ok || v.String() != "192.168.1.1:12345" {
+		t.Errorf("expected remote_addr=192.168.1.1:12345, got %v (found=%v)", v, ok)
+	}
+}
+
+func TestRequestLogger_SkipsHealthEndpoint(t *testing.T) {
+	ch := &captureHandler{}
+	logger := slog.New(ch)
+	slog.SetDefault(logger)
+
+	r := chi.NewRouter()
+	r.Use(requestLogger)
+	r.Get("/health", healthHandler)
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	if len(ch.records) != 0 {
+		t.Fatalf("expected no log records for /health, got %d", len(ch.records))
+	}
+}
+
+func TestRequestLogger_CapturesNon200Status(t *testing.T) {
+	ch := &captureHandler{}
+	logger := slog.New(ch)
+	slog.SetDefault(logger)
+
+	r := chi.NewRouter()
+	r.Use(requestLogger)
+	r.Get("/bad", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/bad", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if len(ch.records) != 1 {
+		t.Fatalf("expected 1 log record, got %d", len(ch.records))
+	}
+
+	if v, ok := ch.findAttr(ch.records[0], "status"); !ok || v.Int64() != 400 {
+		t.Errorf("expected status=400, got %v", v)
+	}
 }
