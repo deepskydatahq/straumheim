@@ -4,7 +4,7 @@ package sink
 import (
 	"context"
 
-	"github.com/deepsky-data/straumheim/internal/record"
+	"github.com/deepskydatahq/straumheim/internal/record"
 )
 
 // SinkMode indicates whether a sink processes records as a stream or in batches.

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/deepsky-data/straumheim/internal/record"
+	"github.com/deepskydatahq/straumheim/internal/record"
 )
 
 // ErrBufferFull is returned when Push is called on a buffer at capacity.

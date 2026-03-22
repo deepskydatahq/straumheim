@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/deepsky-data/straumheim/internal/record"
+	"github.com/deepskydatahq/straumheim/internal/record"
 )
 
 // StdoutSink writes each record as a JSON line to an io.Writer.

@@ -9,8 +9,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	"github.com/deepsky-data/straumheim/internal/pipeline"
-	"github.com/deepsky-data/straumheim/internal/record"
+	"github.com/deepskydatahq/straumheim/internal/pipeline"
+	"github.com/deepskydatahq/straumheim/internal/record"
 )
 
 const maxBodySize = 1 << 20 // 1MB

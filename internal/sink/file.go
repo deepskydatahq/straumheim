@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/deepsky-data/straumheim/internal/record"
+	"github.com/deepskydatahq/straumheim/internal/record"
 )
 
 // FileSink writes records as JSONL (one JSON object per line) to local
