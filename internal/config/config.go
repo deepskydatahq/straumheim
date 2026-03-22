@@ -27,8 +27,22 @@ type ServerConfig struct {
 
 // InputConfig holds settings for an input endpoint.
 type InputConfig struct {
-	Enabled bool   `yaml:"enabled"`
-	Path    string `yaml:"path"`
+	Enabled  bool            `yaml:"enabled"`
+	Path     string          `yaml:"path"`
+	Snowplow *SnowplowConfig `yaml:"snowplow,omitempty"`
+}
+
+// SnowplowConfig holds Snowplow-specific input configuration.
+type SnowplowConfig struct {
+	Cookie SnowplowCookieConfig `yaml:"cookie"`
+}
+
+// SnowplowCookieConfig holds cookie settings for network_userid tracking.
+type SnowplowCookieConfig struct {
+	Enabled bool          `yaml:"enabled"`
+	Name    string        `yaml:"name"`
+	Domain  string        `yaml:"domain"`
+	TTL     time.Duration `yaml:"ttl"`
 }
 
 // BufferConfig holds settings for the event buffer.

@@ -166,6 +166,22 @@ func registerInputs(r chi.Router, inputs map[string]config.InputConfig, p pipeli
 			wh := input.NewWebhook()
 			wh.Register(r, p)
 			slog.Info("registered input", "name", name, "protocol", wh.Protocol())
+		case "snowplow":
+			cfg := input.SnowplowConfig{
+				Enabled: ic.Enabled,
+				Path:    ic.Path,
+			}
+			if ic.Snowplow != nil {
+				cfg.Cookie = input.CookieConfig{
+					Enabled: ic.Snowplow.Cookie.Enabled,
+					Name:    ic.Snowplow.Cookie.Name,
+					Domain:  ic.Snowplow.Cookie.Domain,
+					TTL:     ic.Snowplow.Cookie.TTL,
+				}
+			}
+			sp := input.NewSnowplowInput(cfg)
+			sp.Register(r, p)
+			slog.Info("registered input", "name", name, "protocol", sp.Protocol())
 		default:
 			slog.Warn("unknown input type, skipping", "name", name)
 		}

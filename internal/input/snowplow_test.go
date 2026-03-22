@@ -320,3 +320,161 @@ func TestSnowplowPOST_EmptyDataArray(t *testing.T) {
 		t.Fatalf("expected 0 records, got %d", len(fp.records))
 	}
 }
+
+// --- Story 3: Cookie handling tests ---
+
+func TestSnowplowCookie_FirstRequestSetsCookie(t *testing.T) {
+	sp := NewSnowplowInput(SnowplowConfig{
+		Cookie: CookieConfig{
+			Enabled: true,
+			Name:    "sp",
+			TTL:     365 * 24 * time.Hour,
+		},
+	})
+	fp := &fakePipeline{}
+	r := newTestRouter(sp, fp)
+
+	req := httptest.NewRequest(http.MethodGet, "/sp/i?e=pv", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	// Check Set-Cookie header.
+	cookies := w.Result().Cookies()
+	var found *http.Cookie
+	for _, c := range cookies {
+		if c.Name == "sp" {
+			found = c
+			break
+		}
+	}
+	if found == nil {
+		t.Fatal("expected Set-Cookie header with name 'sp'")
+	}
+	if found.Path != "/" {
+		t.Errorf("expected cookie Path=/, got %s", found.Path)
+	}
+	if found.Value == "" {
+		t.Error("expected cookie to have a UUID value")
+	}
+
+	// Check that network_userid is in the record payload.
+	if len(fp.records) != 1 {
+		t.Fatalf("expected 1 record, got %d", len(fp.records))
+	}
+	nuid, ok := fp.records[0].Payload["network_userid"]
+	if !ok {
+		t.Fatal("expected network_userid in payload")
+	}
+	if nuid != found.Value {
+		t.Errorf("expected network_userid=%s, got %v", found.Value, nuid)
+	}
+}
+
+func TestSnowplowCookie_SubsequentRequestReadsCookie(t *testing.T) {
+	sp := NewSnowplowInput(SnowplowConfig{
+		Cookie: CookieConfig{
+			Enabled: true,
+			Name:    "sp",
+			TTL:     365 * 24 * time.Hour,
+		},
+	})
+	fp := &fakePipeline{}
+	r := newTestRouter(sp, fp)
+
+	req := httptest.NewRequest(http.MethodGet, "/sp/i?e=pv", nil)
+	req.AddCookie(&http.Cookie{Name: "sp", Value: "existing-uuid-123"})
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if len(fp.records) != 1 {
+		t.Fatalf("expected 1 record, got %d", len(fp.records))
+	}
+	nuid, ok := fp.records[0].Payload["network_userid"]
+	if !ok {
+		t.Fatal("expected network_userid in payload")
+	}
+	if nuid != "existing-uuid-123" {
+		t.Errorf("expected network_userid=existing-uuid-123, got %v", nuid)
+	}
+}
+
+func TestSnowplowCookie_ConfigurableDomain(t *testing.T) {
+	sp := NewSnowplowInput(SnowplowConfig{
+		Cookie: CookieConfig{
+			Enabled: true,
+			Name:    "sp",
+			Domain:  "example.com",
+			TTL:     365 * 24 * time.Hour,
+		},
+	})
+	fp := &fakePipeline{}
+	r := newTestRouter(sp, fp)
+
+	req := httptest.NewRequest(http.MethodGet, "/sp/i?e=pv", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	cookies := w.Result().Cookies()
+	var found *http.Cookie
+	for _, c := range cookies {
+		if c.Name == "sp" {
+			found = c
+			break
+		}
+	}
+	if found == nil {
+		t.Fatal("expected Set-Cookie header")
+	}
+	if found.Domain != "example.com" {
+		t.Errorf("expected cookie Domain=example.com, got %s", found.Domain)
+	}
+}
+
+func TestSnowplowCookie_DisabledByDefault(t *testing.T) {
+	sp := NewSnowplowInput(SnowplowConfig{})
+	fp := &fakePipeline{}
+	r := newTestRouter(sp, fp)
+
+	req := httptest.NewRequest(http.MethodGet, "/sp/i?e=pv", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	cookies := w.Result().Cookies()
+	for _, c := range cookies {
+		if c.Name == "sp" {
+			t.Fatal("expected no cookie when cookie is disabled")
+		}
+	}
+}
+
+func TestSnowplowCookie_CustomName(t *testing.T) {
+	sp := NewSnowplowInput(SnowplowConfig{
+		Cookie: CookieConfig{
+			Enabled: true,
+			Name:    "my_tracker",
+			TTL:     365 * 24 * time.Hour,
+		},
+	})
+	fp := &fakePipeline{}
+	r := newTestRouter(sp, fp)
+
+	req := httptest.NewRequest(http.MethodGet, "/sp/i?e=pv", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	cookies := w.Result().Cookies()
+	var found *http.Cookie
+	for _, c := range cookies {
+		if c.Name == "my_tracker" {
+			found = c
+			break
+		}
+	}
+	if found == nil {
+		t.Fatal("expected Set-Cookie header with name 'my_tracker'")
+	}
+}

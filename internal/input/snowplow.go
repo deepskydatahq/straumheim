@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 
 	"github.com/deepsky-data/straumheim/internal/pipeline"
 	"github.com/deepsky-data/straumheim/internal/record"
@@ -62,7 +63,12 @@ func (s *SnowplowInput) Register(router chi.Router, p pipeline.Pipeline) {
 
 func (s *SnowplowInput) getHandler(p pipeline.Pipeline) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
+		nuid := s.handleCookie(rw, r)
 		rec := s.buildRecordFromQuery(r)
+		if nuid != "" {
+			rec.Payload["network_userid"] = nuid
+			rec.Flattened["network_userid"] = nuid
+		}
 
 		if err := p.Ingest(r.Context(), []record.Record{rec}); err != nil {
 			http.Error(rw, "Internal Server Error", http.StatusInternalServerError)
@@ -84,6 +90,7 @@ type trackerPayload struct {
 
 func (s *SnowplowInput) postHandler(p pipeline.Pipeline) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
+		nuid := s.handleCookie(rw, r)
 		r.Body = http.MaxBytesReader(rw, r.Body, maxBodySize)
 
 		var tp trackerPayload
@@ -100,6 +107,10 @@ func (s *SnowplowInput) postHandler(p pipeline.Pipeline) http.HandlerFunc {
 		records := make([]record.Record, 0, len(tp.Data))
 		for _, fields := range tp.Data {
 			rec := s.buildRecordFromFields(r, fields)
+			if nuid != "" {
+				rec.Payload["network_userid"] = nuid
+				rec.Flattened["network_userid"] = nuid
+			}
 			records = append(records, rec)
 		}
 
@@ -140,6 +151,45 @@ func (s *SnowplowInput) buildRecordFromFields(r *http.Request, fields map[string
 	}
 
 	return rec
+}
+
+// handleCookie reads or sets the network_userid cookie. Returns the cookie
+// value (UUID) if cookie tracking is enabled, empty string otherwise.
+func (s *SnowplowInput) handleCookie(rw http.ResponseWriter, r *http.Request) string {
+	if !s.cfg.Cookie.Enabled {
+		return ""
+	}
+
+	cookieName := s.cfg.Cookie.Name
+	if cookieName == "" {
+		cookieName = "sp"
+	}
+
+	// Check for existing cookie.
+	if c, err := r.Cookie(cookieName); err == nil && c.Value != "" {
+		return c.Value
+	}
+
+	// Generate new UUID for network_userid.
+	nuid := uuid.Must(uuid.NewV7()).String()
+
+	ttl := s.cfg.Cookie.TTL
+	if ttl == 0 {
+		ttl = 365 * 24 * time.Hour
+	}
+
+	http.SetCookie(rw, &http.Cookie{
+		Name:     cookieName,
+		Value:    nuid,
+		Path:     "/",
+		Domain:   s.cfg.Cookie.Domain,
+		MaxAge:   int(ttl.Seconds()),
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+	})
+
+	return nuid
 }
 
 // buildRecordFromQuery creates a Record from Snowplow GET query parameters.

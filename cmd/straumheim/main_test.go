@@ -96,3 +96,39 @@ func TestRegisterInputs(t *testing.T) {
 	// Clean up engine.
 	engine.Close()
 }
+
+func TestRegisterInputsSnowplow(t *testing.T) {
+	r := chi.NewRouter()
+	buf := buffer.NewMemoryBuffer(100, 10, 1000000000)
+	engine := pipeline.NewEngine(buf, []sink.Sink{})
+
+	inputs := map[string]config.InputConfig{
+		"snowplow": {Enabled: true},
+	}
+	registerInputs(r, inputs, engine)
+
+	// Send a GET request to verify the snowplow GET endpoint is registered.
+	req := httptest.NewRequest(http.MethodGet, "/sp/i?e=pv", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	if ct := w.Header().Get("Content-Type"); ct != "image/gif" {
+		t.Fatalf("expected image/gif, got %s", ct)
+	}
+
+	// Send a POST request to verify the snowplow POST endpoint is registered.
+	body := strings.NewReader(`{"schema":"...","data":[{"e":"pv"}]}`)
+	req2 := httptest.NewRequest(http.MethodPost, "/sp/tp2", body)
+	req2.Header.Set("Content-Type", "application/json")
+	w2 := httptest.NewRecorder()
+	r.ServeHTTP(w2, req2)
+
+	if w2.Code != http.StatusOK {
+		t.Fatalf("expected 200 for POST, got %d", w2.Code)
+	}
+
+	engine.Close()
+}

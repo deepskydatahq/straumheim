@@ -10,6 +10,17 @@ inputs:
     enabled: true
     path: /webhook
 
+  # Snowplow tracker protocol — GET /sp/i (pixel) and POST /sp/tp2 (batch).
+  # Compatible with Snowplow JS, iOS, Android, and GTM tracker SDKs.
+  snowplow:
+    enabled: false
+    snowplow:
+      cookie:
+        enabled: false       # enable first-party cookie for network_userid tracking
+        name: sp             # cookie name (default: sp)
+        domain: ""           # cookie domain, empty = browser auto-detects
+        ttl: 8760h           # cookie TTL (default: 1 year / 8760h)
+
 buffer:
   type: memory          # memory (default)
   capacity: 10000       # max buffered records
