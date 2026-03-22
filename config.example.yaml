@@ -46,6 +46,20 @@ sinks:
     flush_interval: 10s
     auto_schema: true
 
+  # ClickHouse sink — writes records via HTTP interface using JSONEachRow format.
+  # Auto-creates table with MergeTree engine and auto-adds columns for new fields.
+  - name: analytics
+    type: clickhouse
+    mode: batch
+    endpoint: http://localhost:8123     # ClickHouse HTTP interface endpoint
+    database: default                   # database name (default: default)
+    table: events                       # table name (default: events)
+    username: default                   # HTTP Basic Auth username (optional)
+    password: ${CLICKHOUSE_PASSWORD}    # HTTP Basic Auth password (optional, use env var)
+    batch_size: 1000
+    flush_interval: 10s
+    auto_schema: true
+
   # File sink — writes records as JSONL files with time-based rotation.
   # Useful for offline analysis with DuckDB, grep, or any JSONL-compatible tool.
   - name: archive

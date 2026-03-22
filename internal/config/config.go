@@ -65,6 +65,10 @@ type SinkConfig struct {
 	AutoSchema       bool          `yaml:"auto_schema"`
 	OutputDir        string        `yaml:"output_dir"`
 	RotationInterval time.Duration `yaml:"rotation_interval"`
+	Endpoint         string        `yaml:"endpoint"`
+	Database         string        `yaml:"database"`
+	Username         string        `yaml:"username"`
+	Password         string        `yaml:"password"`
 }
 
 // LoadConfig reads a YAML file, substitutes ${ENV_VAR} references, and

@@ -204,6 +204,58 @@ func TestRegisterInputsSnowplow(t *testing.T) {
 	engine.Close()
 }
 
+func TestCreateSinksClickHouse(t *testing.T) {
+	configs := []config.SinkConfig{
+		{Name: "ch", Type: "clickhouse", Endpoint: "http://localhost:8123", Database: "mydb", Table: "events"},
+	}
+	sinks, err := createSinks(configs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(sinks) != 1 {
+		t.Fatalf("expected 1 sink, got %d", len(sinks))
+	}
+}
+
+func TestCreateSinksClickHouseDefaultDatabase(t *testing.T) {
+	configs := []config.SinkConfig{
+		{Name: "ch", Type: "clickhouse", Endpoint: "http://localhost:8123"},
+	}
+	sinks, err := createSinks(configs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(sinks) != 1 {
+		t.Fatalf("expected 1 sink, got %d", len(sinks))
+	}
+}
+
+func TestCreateSinksClickHouseNoEndpoint(t *testing.T) {
+	configs := []config.SinkConfig{
+		{Name: "ch", Type: "clickhouse"},
+	}
+	_, err := createSinks(configs)
+	if err == nil {
+		t.Fatal("expected error for clickhouse sink without endpoint")
+	}
+}
+
+func TestCreateSinksClickHousePassword(t *testing.T) {
+	t.Setenv("CH_PASS", "secret123")
+	configs := []config.SinkConfig{
+		{Name: "ch", Type: "clickhouse", Endpoint: "http://localhost:8123", Username: "user", Password: "${CH_PASS}"},
+	}
+	// Note: env var substitution happens during config loading, not in createSinks.
+	// This test verifies the fields are accepted.
+	sinks, err := createSinks(configs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(sinks) != 1 {
+		t.Fatalf("expected 1 sink, got %d", len(sinks))
+	}
+}
+
 func TestRegisterInputsPixel(t *testing.T) {
 	r := chi.NewRouter()
 	buf := buffer.NewMemoryBuffer(100, 10, 1000000000)

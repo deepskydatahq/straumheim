@@ -165,6 +165,19 @@ func createSinks(configs []config.SinkConfig) ([]sink.Sink, error) {
 				return nil, fmt.Errorf("postgres sink %q requires dsn", sc.Name)
 			}
 			sinks = append(sinks, sink.NewPostgresSink(sc.DSN))
+		case "clickhouse":
+			if sc.Endpoint == "" {
+				return nil, fmt.Errorf("clickhouse sink %q requires endpoint", sc.Name)
+			}
+			database := sc.Database
+			if database == "" {
+				database = "default"
+			}
+			table := sc.Table
+			if table == "" {
+				table = "events"
+			}
+			sinks = append(sinks, sink.NewClickHouseSink(sc.Endpoint, database, table, sc.Username, sc.Password))
 		case "file":
 			if sc.OutputDir == "" {
 				return nil, fmt.Errorf("file sink %q requires output_dir", sc.Name)
