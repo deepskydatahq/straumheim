@@ -1,0 +1,52 @@
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN}
+    depends_on:
+      straumheim:
+        condition: service_started
+
+  straumheim:
+    image: ghcr.io/deepskydatahq/straumheim:latest
+    restart: unless-stopped
+    expose:
+      - "8080"
+    volumes:
+      - ./config.prod.example.yaml:/etc/straumheim/config.yaml:ro
+    environment:
+      POSTGRES_DSN: ${POSTGRES_DSN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: events
+      POSTGRES_USER: straumheim
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    expose:
+      - "5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U straumheim -d events"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

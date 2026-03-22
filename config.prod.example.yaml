@@ -1,0 +1,44 @@
+# Straumheim production configuration
+# Environment variables can be referenced with ${VAR} syntax.
+
+server:
+  host: 0.0.0.0
+  port: 8080
+
+inputs:
+  webhook:
+    enabled: true
+    path: /webhook
+
+  snowplow:
+    enabled: true
+    snowplow:
+      cookie:
+        enabled: true
+        name: sp
+        domain: ""
+        ttl: 8760h
+
+  pixel:
+    enabled: true
+    path: /px
+
+buffer:
+  type: memory
+  capacity: 10000
+  flush_interval: 5s
+  flush_count: 500
+
+sinks:
+  - name: warehouse
+    type: postgres
+    mode: batch
+    dsn: ${POSTGRES_DSN}
+    table: events
+    batch_size: 1000
+    flush_interval: 10s
+    auto_schema: true
+
+  - name: debug
+    type: stdout
+    mode: stream
