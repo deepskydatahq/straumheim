@@ -10,6 +10,12 @@ inputs:
     enabled: true
     path: /webhook
 
+  # Pixel input — 1x1 transparent GIF endpoint for email/AMP tracking.
+  # Query parameters become payload fields. Off by default.
+  pixel:
+    enabled: false
+    path: /px
+
 buffer:
   type: memory          # memory (default)
   capacity: 10000       # max buffered records
