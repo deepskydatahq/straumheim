@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -181,5 +182,141 @@ func TestSnowplowGET_DeviceTimeFromDtm(t *testing.T) {
 	expected := time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
 	if !rec.DeviceTime.Equal(expected) {
 		t.Errorf("expected DeviceTime %v, got %v", expected, *rec.DeviceTime)
+	}
+}
+
+// --- Story 2: POST /sp/tp2 tests ---
+
+func TestSnowplowPOST_MultipleEvents(t *testing.T) {
+	sp := NewSnowplowInput(SnowplowConfig{})
+	fp := &fakePipeline{}
+	r := newTestRouter(sp, fp)
+
+	body := `{"schema":"iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4","data":[{"e":"pv","url":"https://example.com","aid":"my-app"},{"e":"se","se_ca":"video","aid":"my-app"}]}`
+	req := httptest.NewRequest(http.MethodPost, "/sp/tp2", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	if len(fp.records) != 2 {
+		t.Fatalf("expected 2 records, got %d", len(fp.records))
+	}
+	for _, rec := range fp.records {
+		if rec.Protocol != "snowplow" {
+			t.Errorf("expected protocol snowplow, got %s", rec.Protocol)
+		}
+	}
+	if fp.records[0].Payload["e"] != "pv" {
+		t.Errorf("expected first event e=pv, got %v", fp.records[0].Payload["e"])
+	}
+	if fp.records[1].Payload["e"] != "se" {
+		t.Errorf("expected second event e=se, got %v", fp.records[1].Payload["e"])
+	}
+}
+
+func TestSnowplowPOST_FullPathVariant(t *testing.T) {
+	sp := NewSnowplowInput(SnowplowConfig{})
+	fp := &fakePipeline{}
+	r := newTestRouter(sp, fp)
+
+	body := `{"schema":"iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4","data":[{"e":"pv"}]}`
+	req := httptest.NewRequest(http.MethodPost, "/sp/com.snowplowanalytics.snowplow/tp2", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	if len(fp.records) != 1 {
+		t.Fatalf("expected 1 record, got %d", len(fp.records))
+	}
+	if fp.records[0].Protocol != "snowplow" {
+		t.Errorf("expected protocol snowplow, got %s", fp.records[0].Protocol)
+	}
+}
+
+func TestSnowplowPOST_RecordHasSnowplowFields(t *testing.T) {
+	sp := NewSnowplowInput(SnowplowConfig{})
+	fp := &fakePipeline{}
+	r := newTestRouter(sp, fp)
+
+	body := `{"schema":"...","data":[{"e":"pv","url":"https://example.com","aid":"my-app","p":"web"}]}`
+	req := httptest.NewRequest(http.MethodPost, "/sp/tp2", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "TestAgent/1.0")
+	req.Header.Set("X-Forwarded-For", "5.6.7.8")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if len(fp.records) != 1 {
+		t.Fatalf("expected 1 record, got %d", len(fp.records))
+	}
+	rec := fp.records[0]
+	if rec.Source != "my-app" {
+		t.Errorf("expected Source my-app, got %s", rec.Source)
+	}
+	if rec.IP != "5.6.7.8" {
+		t.Errorf("expected IP 5.6.7.8, got %s", rec.IP)
+	}
+	if rec.UserAgent != "TestAgent/1.0" {
+		t.Errorf("expected UserAgent TestAgent/1.0, got %s", rec.UserAgent)
+	}
+	if rec.Flattened == nil {
+		t.Error("expected Flattened to be populated")
+	}
+}
+
+func TestSnowplowPOST_BodySizeLimit(t *testing.T) {
+	sp := NewSnowplowInput(SnowplowConfig{})
+	fp := &fakePipeline{}
+	r := newTestRouter(sp, fp)
+
+	// Create a body larger than 1MB.
+	bigPayload := `{"schema":"...","data":[{"e":"` + strings.Repeat("x", 1<<20+1) + `"}]}`
+	req := httptest.NewRequest(http.MethodPost, "/sp/tp2", strings.NewReader(bigPayload))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for oversized body, got %d", w.Code)
+	}
+}
+
+func TestSnowplowPOST_InvalidJSON(t *testing.T) {
+	sp := NewSnowplowInput(SnowplowConfig{})
+	fp := &fakePipeline{}
+	r := newTestRouter(sp, fp)
+
+	req := httptest.NewRequest(http.MethodPost, "/sp/tp2", strings.NewReader("not json"))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestSnowplowPOST_EmptyDataArray(t *testing.T) {
+	sp := NewSnowplowInput(SnowplowConfig{})
+	fp := &fakePipeline{}
+	r := newTestRouter(sp, fp)
+
+	body := `{"schema":"...","data":[]}`
+	req := httptest.NewRequest(http.MethodPost, "/sp/tp2", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	if len(fp.records) != 0 {
+		t.Fatalf("expected 0 records, got %d", len(fp.records))
 	}
 }

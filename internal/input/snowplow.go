@@ -1,6 +1,7 @@
 package input
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
@@ -10,6 +11,8 @@ import (
 	"github.com/deepsky-data/straumheim/internal/pipeline"
 	"github.com/deepsky-data/straumheim/internal/record"
 )
+
+const maxBodySize = 1 << 20 // 1MB
 
 // transparentGIF is a 1x1 transparent GIF image (43 bytes).
 var transparentGIF = []byte{
@@ -53,6 +56,8 @@ func (s *SnowplowInput) Protocol() string {
 // Register attaches the Snowplow HTTP handlers to the router.
 func (s *SnowplowInput) Register(router chi.Router, p pipeline.Pipeline) {
 	router.Get("/sp/i", s.getHandler(p))
+	router.Post("/sp/tp2", s.postHandler(p))
+	router.Post("/sp/com.snowplowanalytics.snowplow/tp2", s.postHandler(p))
 }
 
 func (s *SnowplowInput) getHandler(p pipeline.Pipeline) http.HandlerFunc {
@@ -71,32 +76,61 @@ func (s *SnowplowInput) getHandler(p pipeline.Pipeline) http.HandlerFunc {
 	}
 }
 
-// buildRecordFromQuery creates a Record from Snowplow GET query parameters.
-func (s *SnowplowInput) buildRecordFromQuery(r *http.Request) record.Record {
+// trackerPayload is the Snowplow tracker protocol v2 POST body format.
+type trackerPayload struct {
+	Schema string           `json:"schema"`
+	Data   []map[string]any `json:"data"`
+}
+
+func (s *SnowplowInput) postHandler(p pipeline.Pipeline) http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(rw, r.Body, maxBodySize)
+
+		var tp trackerPayload
+		if err := json.NewDecoder(r.Body).Decode(&tp); err != nil {
+			http.Error(rw, "Bad Request", http.StatusBadRequest)
+			return
+		}
+
+		if len(tp.Data) == 0 {
+			rw.WriteHeader(http.StatusOK)
+			return
+		}
+
+		records := make([]record.Record, 0, len(tp.Data))
+		for _, fields := range tp.Data {
+			rec := s.buildRecordFromFields(r, fields)
+			records = append(records, rec)
+		}
+
+		if err := p.Ingest(r.Context(), records); err != nil {
+			http.Error(rw, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		rw.WriteHeader(http.StatusOK)
+	}
+}
+
+// buildRecordFromFields creates a Record from a Snowplow field map (used by POST).
+func (s *SnowplowInput) buildRecordFromFields(r *http.Request, fields map[string]any) record.Record {
 	rec := record.NewRecord()
 	rec.Protocol = s.Protocol()
 	rec.IP = extractIP(r)
 	rec.UserAgent = r.UserAgent()
 	rec.Referer = r.Referer()
-
-	payload := make(map[string]any)
-	for key, values := range r.URL.Query() {
-		if len(values) > 0 {
-			payload[key] = values[0]
-		}
-	}
-	rec.Payload = payload
-	rec.Flattened = record.Flatten(payload)
+	rec.Payload = fields
+	rec.Flattened = record.Flatten(fields)
 
 	// Set Source from aid (app_id).
-	if aid, ok := payload["aid"]; ok {
-		if s, ok := aid.(string); ok {
-			rec.Source = s
+	if aid, ok := fields["aid"]; ok {
+		if aidStr, ok := aid.(string); ok {
+			rec.Source = aidStr
 		}
 	}
 
 	// Set DeviceTime from dtm (device timestamp in Unix milliseconds).
-	if dtm, ok := payload["dtm"]; ok {
+	if dtm, ok := fields["dtm"]; ok {
 		if dtmStr, ok := dtm.(string); ok {
 			if ms, err := strconv.ParseInt(dtmStr, 10, 64); err == nil {
 				t := time.UnixMilli(ms).UTC()
@@ -106,4 +140,15 @@ func (s *SnowplowInput) buildRecordFromQuery(r *http.Request) record.Record {
 	}
 
 	return rec
+}
+
+// buildRecordFromQuery creates a Record from Snowplow GET query parameters.
+func (s *SnowplowInput) buildRecordFromQuery(r *http.Request) record.Record {
+	fields := make(map[string]any)
+	for key, values := range r.URL.Query() {
+		if len(values) > 0 {
+			fields[key] = values[0]
+		}
+	}
+	return s.buildRecordFromFields(r, fields)
 }
