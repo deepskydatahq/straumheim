@@ -127,7 +127,7 @@ func TestClickHouseSinkWrite_JSONEachRow(t *testing.T) {
 	if row["id"] != "id-1" {
 		t.Errorf("expected id 'id-1', got %v", row["id"])
 	}
-	if row["timestamp"] != "2025-01-15T10:30:00Z" {
+	if row["timestamp"] != "2025-01-15 10:30:00.000" {
 		t.Errorf("expected timestamp '2025-01-15T10:30:00Z', got %v", row["timestamp"])
 	}
 	if row["protocol"] != "webhook" {
@@ -367,8 +367,8 @@ func TestClickHouseSinkWrite_DeviceTime(t *testing.T) {
 	if err := json.Unmarshal([]byte(strings.TrimSpace(receivedBody)), &row); err != nil {
 		t.Fatalf("invalid JSON: %v", err)
 	}
-	if row["device_time"] != "2025-06-01T11:59:00Z" {
-		t.Errorf("expected device_time RFC3339, got %v", row["device_time"])
+	if row["device_time"] != "2025-06-01 11:59:00.000" {
+		t.Errorf("expected device_time ClickHouse format, got %v", row["device_time"])
 	}
 }
 
