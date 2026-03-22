@@ -1,0 +1,54 @@
+# Epic: Stdout & Postgres Sinks
+# Implement the two M001 sinks: stdout (debug) and Postgres (COPY batch)
+
+id = "M001-E003"
+parent = "M001"
+title = "Stdout and Postgres sinks"
+status = "active"
+created = 2026-03-22
+depends_on = ["M001-E001"]
+
+[outcome]
+description = """
+Stdout sink prints records as JSON (stream mode). Postgres sink writes records
+via COPY FROM STDIN batching, auto-creates the events table, and auto-adds
+columns when new fields appear in records.
+"""
+
+[job_story]
+description = """When records are flushed from the buffer, I want them delivered
+to Postgres (batched COPY) and stdout (JSON per line), so that events are both
+stored and observable."""
+
+[testing]
+approach = "unit-test"
+criteria = [
+    "Stdout sink writes each record as a JSON line to the configured writer",
+    "Stdout sink Mode() returns SinkModeStream",
+    "Postgres sink auto-creates events table with core columns on Init",
+    "Postgres sink writes records via COPY protocol",
+    "Postgres sink detects new fields and ALTER TABLEs to add columns",
+    "Postgres sink handles flattened payload fields as columns",
+    "Postgres sink Mode() returns SinkModeBatch",
+    "Both sinks implement the Sink interface completely",
+]
+validator_context = [
+    "internal/sink/stdout.go",
+    "internal/sink/postgres.go",
+]
+
+[context]
+relevant_paths = ["internal/sink/"]
+dependencies = ["M001-E001"]
+
+[notes]
+considerations = """
+Postgres sink is the most complex component. Uses pgx for the driver.
+COPY FROM STDIN via pgx.CopyFrom. Auto-schema: track known columns in memory,
+compare against flattened record keys, ALTER TABLE ADD COLUMN for new ones.
+Column types inferred from Go types: string→TEXT, float64→DOUBLE PRECISION,
+bool→BOOLEAN, default→TEXT. Postgres tests need a real database or a mock —
+prefer testcontainers or pgx mock for unit tests.
+"""
+
+estimated_stories = 2

@@ -1,0 +1,36 @@
+id = "M001-E003-S001"
+parent = "M001-E003"
+title = "Stdout sink"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = "Stdout sink that writes each record as a JSON line. Stream mode — writes immediately on each Write call."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Write outputs each record as a single JSON line"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Mode() returns SinkModeStream"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Init, Flush, Close are no-ops that return nil"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Output goes to configurable io.Writer (default os.Stdout)"
+
+[context]
+relevant_paths = ["internal/sink/stdout.go"]
+input_fixtures = []
+depends_on = ["M001-E001-S003"]
+
+[handoff]
+implementation_hints = "Simplest sink. json.Marshal each record, write + newline. Accept io.Writer in constructor for testability."
+reference_files = []

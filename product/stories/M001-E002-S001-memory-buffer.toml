@@ -1,0 +1,44 @@
+id = "M001-E002-S001"
+parent = "M001-E002"
+title = "Memory buffer implementation"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = "In-memory buffer using Go channels with configurable capacity, flush-by-count and flush-by-interval."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "NewMemoryBuffer(capacity, flushCount, flushInterval) creates buffer"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Push adds records to the channel"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Consume batches records and calls handler when flushCount reached"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Consume flushes on flushInterval even if flushCount not reached"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Close() flushes any remaining buffered records then returns"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Push returns error when buffer is full (channel at capacity)"
+
+[context]
+relevant_paths = ["internal/buffer/memory.go"]
+input_fixtures = []
+depends_on = ["M001-E001-S003"]
+
+[handoff]
+implementation_hints = "Consume runs in a goroutine started by the method. Uses select with time.Ticker for interval flush. Context cancellation triggers final drain."
+reference_files = []

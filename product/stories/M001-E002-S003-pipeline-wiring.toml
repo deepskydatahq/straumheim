@@ -1,0 +1,40 @@
+id = "M001-E002-S003"
+parent = "M001-E002"
+title = "Pipeline struct wiring inputs to buffer to sinks"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = "Pipeline struct that owns buffer and sinks, provides Ingest() for inputs, and dispatches batches to all sinks via fan-out."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "NewPipeline(buffer, sinks) creates pipeline and starts buffer consumer"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Pipeline.Ingest(records) pushes to buffer"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Buffer consumer dispatches batches to all configured sinks"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Each sink receives every record (fan-out, not round-robin)"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Pipeline.Close() stops consumer, flushes buffer, closes all sinks"
+
+[context]
+relevant_paths = ["internal/pipeline/pipeline.go"]
+input_fixtures = []
+depends_on = ["M001-E002-S001", "M001-E002-S002"]
+
+[handoff]
+implementation_hints = "Pipeline.Ingest is what inputs call. The buffer consumer's handler function iterates sinks and calls Write on each."
+reference_files = []

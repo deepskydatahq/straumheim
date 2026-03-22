@@ -1,0 +1,48 @@
+id = "M001-E001-S003"
+parent = "M001-E001"
+title = "YAML config parsing and core interfaces"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = "YAML config loader with env var substitution, sensible defaults, and Input/Buffer/Sink interface definitions."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "LoadConfig(path) parses YAML into Config struct"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Config substitutes ${ENV_VAR} with os.Getenv values"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Config has defaults: port=8080, buffer.type=memory, buffer.capacity=10000, buffer.flush_interval=5s, buffer.flush_count=500"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Config struct covers server, inputs, buffer, and sinks sections"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Input interface defined: Register(router, pipeline) and Protocol() string"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Buffer interface defined: Push, Consume, Close"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Sink interface defined: Init, Write, Flush, Close, Mode with SinkModeStream/SinkModeBatch"
+
+[context]
+relevant_paths = ["internal/config/config.go", "internal/input/input.go", "internal/buffer/buffer.go", "internal/sink/sink.go"]
+input_fixtures = []
+depends_on = ["M001-E001-S001"]
+
+[handoff]
+implementation_hints = "Use gopkg.in/yaml.v3 for YAML. Env var substitution: regex replace ${...} before unmarshal. Interfaces use Chi router (github.com/go-chi/chi/v5), not stdlib ServeMux."
+reference_files = ["init.md"]

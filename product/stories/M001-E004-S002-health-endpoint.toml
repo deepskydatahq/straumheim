@@ -1,0 +1,28 @@
+id = "M001-E004-S002"
+parent = "M001-E004"
+title = "Health check endpoint"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = "GET /health endpoint that returns 200 with JSON status."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "GET /health returns 200 with {\"status\": \"ok\"}"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Response content-type is application/json"
+
+[context]
+relevant_paths = ["cmd/straumheim/main.go"]
+input_fixtures = []
+depends_on = ["M001-E004-S001"]
+
+[handoff]
+implementation_hints = "Simple handler on the Chi router. Could be in main.go or a small health package."
+reference_files = []

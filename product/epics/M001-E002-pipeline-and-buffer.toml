@@ -1,0 +1,53 @@
+# Epic: Pipeline Wiring & Memory Buffer
+# Connect inputs → buffer → sinks, implement Go channel buffer
+
+id = "M001-E002"
+parent = "M001"
+title = "Pipeline wiring and memory buffer"
+status = "active"
+created = 2026-03-22
+depends_on = ["M001-E001"]
+
+[outcome]
+description = """
+Memory buffer (Go channels) with configurable capacity, flush-by-count and
+flush-by-interval. Pipeline struct that wires inputs to buffer to sinks with
+fan-out. Webhook input that accepts JSON POSTs and returns record IDs.
+"""
+
+[job_story]
+description = """When an HTTP request arrives, I want it to flow through the
+entire pipeline (input → record → buffer → sinks), so that the end-to-end
+data path is validated."""
+
+[testing]
+approach = "unit-test"
+criteria = [
+    "Memory buffer Push/Consume works with configurable batch size",
+    "Buffer flushes on count threshold",
+    "Buffer flushes on time interval when count not reached",
+    "Buffer.Close() flushes remaining records",
+    "Pipeline fans out to multiple sinks",
+    "Webhook input parses JSON body into Record",
+    "Webhook input extracts IP, user agent, referer from request",
+    "POST /webhook returns 200 with JSON {id: <uuid>}",
+    "POST /webhook with invalid content-type returns 415",
+]
+validator_context = [
+    "internal/buffer/memory.go",
+    "internal/pipeline/pipeline.go",
+    "internal/input/webhook.go",
+]
+
+[context]
+relevant_paths = ["internal/buffer/", "internal/pipeline/", "internal/input/"]
+dependencies = ["M001-E001"]
+
+[notes]
+considerations = """
+Buffer consumer runs in a goroutine. Needs clean shutdown via context cancellation.
+Pipeline is the orchestrator — it owns the buffer, registers inputs on the router,
+and dispatches batches to sinks. Fan-out means each sink gets its own copy of the batch.
+"""
+
+estimated_stories = 3

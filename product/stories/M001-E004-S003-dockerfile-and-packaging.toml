@@ -1,0 +1,40 @@
+id = "M001-E004-S003"
+parent = "M001-E004"
+title = "Dockerfile, Makefile, and config.example.yaml"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = "Multi-stage Dockerfile (golang builder → scratch), Makefile with build/test/docker targets, and config.example.yaml."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "integration"
+description = "docker build -t straumheim . succeeds"
+
+[[acceptance_criteria.criteria]]
+test = "integration"
+description = "Docker image runs and responds to GET /health"
+
+[[acceptance_criteria.criteria]]
+test = "integration"
+description = "make build produces binary at ./bin/straumheim"
+
+[[acceptance_criteria.criteria]]
+test = "integration"
+description = "make test runs go test ./..."
+
+[[acceptance_criteria.criteria]]
+test = "integration"
+description = "config.example.yaml documents webhook input, memory buffer, postgres sink, stdout sink"
+
+[context]
+relevant_paths = ["Dockerfile", "Makefile", "config.example.yaml"]
+input_fixtures = []
+depends_on = ["M001-E004-S001"]
+
+[handoff]
+implementation_hints = "Dockerfile stage 1: golang:1.24-alpine, CGO_ENABLED=0. Stage 2: scratch, copy binary + /etc/ssl/certs. Makefile: standard Go project targets. Config example: full YAML from init.md but only M001 features uncommented."
+reference_files = ["init.md"]

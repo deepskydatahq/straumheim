@@ -1,0 +1,53 @@
+# Epic: HTTP Server, Health Check, Docker & Config Example
+# Main entrypoint, health endpoint, Dockerfile, config.example.yaml, Makefile
+
+id = "M001-E004"
+parent = "M001"
+title = "HTTP server, health check, Docker packaging"
+status = "active"
+created = 2026-03-22
+depends_on = ["M001-E002", "M001-E003"]
+
+[outcome]
+description = """
+Main entrypoint that loads config, creates the pipeline, starts the HTTP server
+with Chi router, and handles graceful shutdown. Health endpoint at GET /health.
+Dockerfile with multi-stage build (scratch base). config.example.yaml and Makefile.
+"""
+
+[job_story]
+description = """When I run `docker run straumheim`, I want the server to start,
+accept webhook events, deliver them to configured sinks, and respond to health
+checks, so that the full deployment story is validated."""
+
+[testing]
+approach = "integration-test"
+criteria = [
+    "main.go loads config and starts HTTP server",
+    "GET /health returns 200 with JSON {status: ok}",
+    "Graceful shutdown on SIGTERM/SIGINT flushes buffer and closes sinks",
+    "Dockerfile builds successfully (multi-stage, scratch base)",
+    "Docker image runs and accepts HTTP requests",
+    "config.example.yaml documents all M001 options",
+    "Makefile has build, test, docker-build targets",
+]
+validator_context = [
+    "cmd/straumheim/main.go",
+    "Dockerfile",
+    "Makefile",
+    "config.example.yaml",
+]
+
+[context]
+relevant_paths = ["cmd/", "Dockerfile", "Makefile", "config.example.yaml"]
+dependencies = ["M001-E002", "M001-E003"]
+
+[notes]
+considerations = """
+This epic wires everything together. Main creates config → pipeline → server.
+Graceful shutdown: catch SIGTERM, cancel context, pipeline.Close() flushes buffer
+and closes sinks. Chi router hosts the webhook input routes + /health.
+Dockerfile: stage 1 builds with golang:1.22-alpine, stage 2 copies binary to scratch.
+"""
+
+estimated_stories = 3

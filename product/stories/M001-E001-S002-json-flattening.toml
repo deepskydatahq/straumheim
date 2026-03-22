@@ -1,0 +1,48 @@
+id = "M001-E001-S002"
+parent = "M001-E001"
+title = "JSON flattening logic"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = "Implement JSON flattening that converts nested map[string]any to dot-notation flat keys for warehouse compatibility."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Flatten({\"a\": {\"b\": 1}}) returns {\"a_b\": 1}"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Flatten({\"a\": {\"b\": {\"c\": \"deep\"}}}) returns {\"a_b_c\": \"deep\"}"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Flatten handles arrays: {\"items\": [1,2,3]} returns {\"items_0\": 1, \"items_1\": 2, \"items_2\": 3}"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Flatten handles nil/null values: {\"a\": nil} returns {\"a\": nil}"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Flatten with empty map returns empty map"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Flatten with already-flat map returns same keys"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Record.EnsureFlattened() populates Flattened from Payload if nil"
+
+[context]
+relevant_paths = ["internal/record/flatten.go"]
+input_fixtures = []
+depends_on = ["M001-E001-S001"]
+
+[handoff]
+implementation_hints = "Separator is underscore (_), not dot. Recursive with prefix accumulation. EnsureFlattened is the lazy population method."
+reference_files = ["init.md"]

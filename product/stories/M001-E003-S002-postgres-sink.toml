@@ -1,0 +1,44 @@
+id = "M001-E003-S002"
+parent = "M001-E003"
+title = "Postgres sink with COPY batching and auto-schema"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = "Postgres sink that writes records via COPY FROM STDIN, auto-creates the events table, and auto-adds columns for new fields."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Init connects to Postgres and creates events table with core columns (id, timestamp, protocol, source, payload, ip, user_agent, referer, is_valid, device_time, schema, vendor, schema_version)"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Write uses pgx CopyFrom for batch insert"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Write detects new flattened keys and ALTERs table to add TEXT columns"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Mode() returns SinkModeBatch"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Close() closes the database connection pool"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Records with new fields don't error — columns are added dynamically"
+
+[context]
+relevant_paths = ["internal/sink/postgres.go"]
+input_fixtures = []
+depends_on = ["M001-E001-S003"]
+
+[handoff]
+implementation_hints = "Use github.com/jackc/pgx/v5. Track known columns in a map. Before COPY, check if any flattened keys are unknown → ALTER TABLE ADD COLUMN. Core columns are always created on Init. Payload stored as JSONB. Flattened fields become individual TEXT columns."
+reference_files = ["init.md"]

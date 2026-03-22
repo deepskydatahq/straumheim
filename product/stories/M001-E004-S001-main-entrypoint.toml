@@ -1,0 +1,36 @@
+id = "M001-E004-S001"
+parent = "M001-E004"
+title = "Main entrypoint with Chi server and graceful shutdown"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = "cmd/straumheim/main.go that loads config, creates pipeline with configured sinks, starts Chi HTTP server, and handles graceful shutdown."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "integration"
+description = "Binary starts, logs listening address"
+
+[[acceptance_criteria.criteria]]
+test = "integration"
+description = "Config file path from -config flag or STRAUMHEIM_CONFIG env var, defaults to config.yaml"
+
+[[acceptance_criteria.criteria]]
+test = "integration"
+description = "Creates pipeline with configured buffer, sinks, and registers inputs"
+
+[[acceptance_criteria.criteria]]
+test = "integration"
+description = "SIGTERM triggers graceful shutdown: stops accepting requests, flushes pipeline, exits 0"
+
+[context]
+relevant_paths = ["cmd/straumheim/main.go"]
+input_fixtures = []
+depends_on = ["M001-E002-S003"]
+
+[handoff]
+implementation_hints = "Use signal.NotifyContext for shutdown. Chi router. Log with slog (stdlib). Create sinks from config, create buffer, create pipeline, register webhook input, start server."
+reference_files = []

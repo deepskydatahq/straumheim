@@ -1,0 +1,93 @@
+# Mission: End-to-End Pipeline
+# Prove that a single Go binary can collect, normalize, buffer, and deliver events
+
+id = "M001"
+title = "End-to-end event pipeline: webhook in, Record out to Postgres and stdout"
+status = "active"
+created = 2026-03-22
+
+[outcome]
+description = """
+A user runs `docker run straumheim` with a YAML config, POSTs a JSON webhook,
+and the event appears as a normalized Record in Postgres and on stdout.
+This validates that the core architecture works end-to-end: HTTP collection,
+Record normalization, memory buffer, batch delivery, and fan-out to multiple sinks.
+"""
+
+user_progress = "From 'no event collection' to 'events flowing into Postgres via a single Docker container'"
+
+[testing]
+approach = "integration-test"
+criteria = [
+    "Go module initializes, project compiles and runs",
+    "HTTP server starts on configured port and accepts requests",
+    "POST /webhook with JSON body returns 200 with a record ID",
+    "Record has UUIDv7 ID, collector timestamp, protocol tag, source, IP, user agent",
+    "Nested JSON payload is flattened to dot-notation keys",
+    "Memory buffer batches records by count or time interval",
+    "Postgres sink creates table on first write (auto-schema)",
+    "Postgres sink writes records via COPY batching",
+    "Postgres sink auto-adds columns when new fields appear",
+    "Stdout sink prints each record as JSON",
+    "Fan-out: both sinks receive every record independently",
+    "GET /health returns 200 with status",
+    "YAML config with environment variable substitution works",
+    "Docker image builds and runs (scratch base, single binary)",
+]
+
+validator_context = [
+    "cmd/straumheim/main.go",
+    "internal/config/config.go",
+    "internal/record/record.go",
+    "internal/record/flatten.go",
+    "internal/input/webhook.go",
+    "internal/buffer/memory.go",
+    "internal/sink/postgres.go",
+    "internal/sink/stdout.go",
+    "internal/pipeline/pipeline.go",
+]
+
+[context]
+related_docs = [
+    "VISION.md",
+    "VALUES.md",
+    "init.md",
+]
+relevant_paths = [
+    "cmd/",
+    "internal/",
+]
+
+[notes]
+considerations = """
+This is the first code in the repository. Everything needs to be built from scratch:
+
+1. Go module init (go.mod)
+2. Record struct with UUIDv7, timestamps, metadata, payload, flattened fields
+3. JSON flattening logic (nested objects → dot-notation keys)
+4. Webhook input: POST /webhook accepts JSON, returns record ID
+5. Memory buffer: Go channel with configurable capacity, flush by count/interval
+6. Stdout sink: prints records as JSON (stream mode)
+7. Postgres sink: COPY FROM STDIN batching, auto-create table, auto-add columns
+8. Pipeline: wires input → record → buffer → sinks
+9. Config: YAML parsing with env var substitution
+10. Health endpoint: GET /health
+11. Main entrypoint: load config, create pipeline, start server
+12. Dockerfile: multi-stage build, scratch base
+13. config.example.yaml
+
+Key design decisions from init.md:
+- Chi router (tiny dep, good middleware)
+- UUIDv7 for IDs (time-sortable, no coordination)
+- Invalid records tagged, never dropped
+- Flattened field populated lazily when warehouse sink needs it
+- IsValid is a pointer (nil = not validated, true/false = result)
+
+What is NOT in scope for M001:
+- Snowplow input (M002)
+- Pixel input (M002)
+- Schema validation (future)
+- File/S3 sinks (future)
+- SQLite buffer (future)
+- Metrics endpoint (M002)
+"""

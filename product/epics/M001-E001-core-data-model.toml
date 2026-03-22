@@ -1,0 +1,55 @@
+# Epic: Core Data Model & Project Scaffolding
+# Go module, Record struct, JSON flattening, config parsing
+
+id = "M001-E001"
+parent = "M001"
+title = "Core data model and project scaffolding"
+status = "active"
+created = 2026-03-22
+depends_on = []
+
+[outcome]
+description = """
+Go module initialized with the Record struct, JSON flattening, YAML config
+parsing with env var substitution, and core interfaces (Input, Buffer, Sink).
+The project compiles, tests pass, and the foundation is ready for pipeline wiring.
+"""
+
+[job_story]
+description = """When I start building the pipeline, I want the core data structures
+and interfaces defined and tested, so that each component can be built against
+stable contracts."""
+
+[testing]
+approach = "unit-test"
+criteria = [
+    "go build ./... compiles without errors",
+    "Record struct matches init.md spec (UUIDv7, timestamps, payload, flattened, metadata)",
+    "NewRecord() generates UUIDv7 ID and sets collector timestamp",
+    "Flatten({a: {b: 1}}) returns {a_b: 1}",
+    "Flatten handles arrays, nulls, and deeply nested objects",
+    "Config loads from YAML file with ${ENV_VAR} substitution",
+    "Config has sensible defaults for all fields",
+    "Input, Buffer, and Sink interfaces are defined",
+]
+validator_context = [
+    "internal/record/",
+    "internal/config/",
+    "internal/input/input.go",
+    "internal/buffer/buffer.go",
+    "internal/sink/sink.go",
+]
+
+[context]
+relevant_paths = ["internal/", "go.mod"]
+dependencies = []
+
+[notes]
+considerations = """
+This is the foundation epic. No external dependencies except Chi and a YAML library.
+UUIDv7 generation needs a library (github.com/google/uuid v1.6+ has UUIDv7).
+Config should support the full YAML structure from init.md but only webhook input
+and stdout/postgres sinks are wired in M001.
+"""
+
+estimated_stories = 3

@@ -1,0 +1,44 @@
+id = "M001-E002-S002"
+parent = "M001-E002"
+title = "Webhook input handler"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = "Webhook HTTP input that accepts JSON POST, creates Records, and pushes them to the pipeline."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "POST /webhook with JSON body returns 200 and {\"id\": \"<uuid>\"}"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Record has Protocol=webhook, extracted IP, UserAgent, Referer"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "POST /webhook with non-JSON content-type returns 415"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "POST /webhook with invalid JSON returns 400"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "POST /webhook/{vendor}/{name}/{version} sets Schema, Vendor, SchemaVersion on Record"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Protocol() returns \"webhook\""
+
+[context]
+relevant_paths = ["internal/input/webhook.go"]
+input_fixtures = []
+depends_on = ["M001-E001-S003"]
+
+[handoff]
+implementation_hints = "Uses Chi router URL params for vendor/name/version. Schema format: vendor/name/version. Pipeline interface needs an Ingest(records []Record) method."
+reference_files = ["init.md"]

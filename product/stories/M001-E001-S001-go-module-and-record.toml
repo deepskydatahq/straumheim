@@ -1,0 +1,40 @@
+id = "M001-E001-S001"
+parent = "M001-E001"
+title = "Go module init and Record struct"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = "Initialize Go module, implement Record struct with UUIDv7 generation, timestamps, and all fields from init.md spec."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "go mod init succeeds, go build ./... compiles"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "NewRecord() returns Record with valid UUIDv7 ID (starts with time-based prefix)"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "NewRecord() sets Timestamp to current time"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Record struct has all fields: ID, Timestamp, DeviceTime, Protocol, Source, Schema, Vendor, SchemaVersion, IsValid, Payload, Flattened, IP, UserAgent, Referer, ReceivedAt"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Record JSON serialization includes all public fields, excludes ReceivedAt"
+
+[context]
+relevant_paths = ["internal/record/record.go", "go.mod"]
+input_fixtures = []
+depends_on = []
+
+[handoff]
+implementation_hints = "Use github.com/google/uuid (v1.6+) for UUIDv7. ReceivedAt has json:\"-\" tag."
+reference_files = ["init.md"]
