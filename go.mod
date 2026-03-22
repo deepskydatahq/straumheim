@@ -1,4 +1,4 @@
-module github.com/deepsky-data/straumheim
+module github.com/deepskydatahq/straumheim
 
 go 1.25.0
 

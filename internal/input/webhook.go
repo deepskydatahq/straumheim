@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/deepsky-data/straumheim/internal/pipeline"
-	"github.com/deepsky-data/straumheim/internal/record"
+	"github.com/deepskydatahq/straumheim/internal/pipeline"
+	"github.com/deepskydatahq/straumheim/internal/record"
 )
 
 // Webhook is an HTTP input that accepts JSON POST requests.

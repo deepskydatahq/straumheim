@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/deepsky-data/straumheim/internal/record"
+	"github.com/deepskydatahq/straumheim/internal/record"
 )
 
 // Interface compliance.

@@ -1,0 +1,82 @@
+# Mission: CI/CD and Release Pipeline
+# Automate testing, building, and publishing so every merge to main produces a tested Docker image
+
+id = "M004"
+title = "GitHub Actions CI/CD: test on PR, build and publish Docker image on merge"
+status = "active"
+created = 2026-03-22
+
+[outcome]
+description = """
+Every PR runs go test and go build. Every merge to main builds a multi-arch Docker
+image and pushes it to ghcr.io/deepskydatahq/straumheim:latest. Tagged releases
+(v0.1.0, etc.) push versioned images. The 'test' status check required by branch
+protection is satisfied by the CI workflow.
+"""
+
+user_progress = "From 'manual builds' to 'automated test → build → publish on every merge'"
+
+[scope]
+in_scope = [
+    "GitHub Actions workflow: test (go test ./...) on every PR and push to main",
+    "GitHub Actions workflow: build multi-arch Docker image (amd64 + arm64) on merge to main",
+    "Push Docker image to ghcr.io/deepskydatahq/straumheim with :latest and :sha tags",
+    "Tagged releases (v*) push :v0.1.0 versioned tags to GHCR",
+    "Create initial v0.1.0 release with changelog",
+    "Makefile updates for local workflow parity",
+]
+out_of_scope = [
+    "Kubernetes manifests or Helm charts",
+    "Automated deployment to a server",
+    "Integration tests against real Postgres in CI (future)",
+    "Code coverage reporting",
+]
+
+[testing]
+approach = "agent-judgment"
+criteria = [
+    ".github/workflows/ci.yml exists and runs go test on PR",
+    "CI job name is 'test' to satisfy branch protection status check",
+    ".github/workflows/release.yml builds and pushes Docker image on merge to main",
+    "Docker image tagged as :latest and :sha-<short> on main merges",
+    "Docker image tagged as :v0.1.0 on git tag push",
+    "Multi-arch build: linux/amd64 and linux/arm64",
+    "GHCR login uses GITHUB_TOKEN (no extra secrets needed)",
+    "v0.1.0 git tag and GitHub release created",
+]
+
+validator_context = [
+    ".github/workflows/ci.yml",
+    ".github/workflows/release.yml",
+]
+
+[context]
+relevant_paths = [
+    "Dockerfile",
+    "Makefile",
+    ".github/",
+]
+
+[notes]
+considerations = """
+Two workflows, clean separation:
+
+1. ci.yml — runs on every PR and push to main
+   - Job name MUST be 'test' (matches branch protection required status check)
+   - Steps: checkout, setup-go, go mod download, go test ./..., go build ./cmd/straumheim/
+   - Fast: no Docker build, just compile and test
+
+2. release.yml — runs on push to main AND on tag push (v*)
+   - Uses docker/build-push-action with buildx for multi-arch
+   - GHCR auth via docker/login-action with GITHUB_TOKEN
+   - Tags: latest + sha on main, semver on tags
+   - Uses docker/metadata-action for tag generation
+
+For v0.1.0 release:
+- Tag the current commit
+- Use gh release create with auto-generated notes
+- This is the first public release — changelog covers M001+M002+M003
+
+Module path note: go.mod says github.com/deepsky-data/straumheim but the actual
+repo is github.com/deepskydatahq/straumheim. We should fix the module path.
+"""

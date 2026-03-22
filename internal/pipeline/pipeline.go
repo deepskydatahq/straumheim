@@ -4,7 +4,7 @@ package pipeline
 import (
 	"context"
 
-	"github.com/deepsky-data/straumheim/internal/record"
+	"github.com/deepskydatahq/straumheim/internal/record"
 )
 
 // Pipeline accepts records from inputs and routes them through the system.

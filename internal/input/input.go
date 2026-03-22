@@ -4,7 +4,7 @@ package input
 import (
 	"github.com/go-chi/chi/v5"
 
-	"github.com/deepsky-data/straumheim/internal/pipeline"
+	"github.com/deepskydatahq/straumheim/internal/pipeline"
 )
 
 // Input represents an event ingestion endpoint.

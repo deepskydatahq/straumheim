@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/deepsky-data/straumheim/internal/record"
+	"github.com/deepskydatahq/straumheim/internal/record"
 )
 
 // fakePipeline captures ingested records for test assertions.

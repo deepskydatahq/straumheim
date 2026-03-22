@@ -7,10 +7,10 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/deepsky-data/straumheim/internal/buffer"
-	"github.com/deepsky-data/straumheim/internal/metrics"
-	"github.com/deepsky-data/straumheim/internal/record"
-	"github.com/deepsky-data/straumheim/internal/sink"
+	"github.com/deepskydatahq/straumheim/internal/buffer"
+	"github.com/deepskydatahq/straumheim/internal/metrics"
+	"github.com/deepskydatahq/straumheim/internal/record"
+	"github.com/deepskydatahq/straumheim/internal/sink"
 )
 
 // Engine is the concrete Pipeline implementation that wires a buffer to sinks.

@@ -12,11 +12,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/deepsky-data/straumheim/internal/buffer"
-	"github.com/deepsky-data/straumheim/internal/config"
-	"github.com/deepsky-data/straumheim/internal/metrics"
-	"github.com/deepsky-data/straumheim/internal/pipeline"
-	"github.com/deepsky-data/straumheim/internal/sink"
+	"github.com/deepskydatahq/straumheim/internal/buffer"
+	"github.com/deepskydatahq/straumheim/internal/config"
+	"github.com/deepskydatahq/straumheim/internal/metrics"
+	"github.com/deepskydatahq/straumheim/internal/pipeline"
+	"github.com/deepskydatahq/straumheim/internal/sink"
 )
 
 func TestHealthHandler(t *testing.T) {

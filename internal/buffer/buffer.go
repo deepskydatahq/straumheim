@@ -4,7 +4,7 @@ package buffer
 import (
 	"context"
 
-	"github.com/deepsky-data/straumheim/internal/record"
+	"github.com/deepskydatahq/straumheim/internal/record"
 )
 
 // HandlerFunc processes a batch of records flushed from the buffer.

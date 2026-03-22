@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/deepsky-data/straumheim/internal/record"
+	"github.com/deepskydatahq/straumheim/internal/record"
 )
 
 func TestStdoutSinkMode(t *testing.T) {

@@ -10,10 +10,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 
-	"github.com/deepsky-data/straumheim/internal/buffer"
-	"github.com/deepsky-data/straumheim/internal/metrics"
-	"github.com/deepsky-data/straumheim/internal/record"
-	"github.com/deepsky-data/straumheim/internal/sink"
+	"github.com/deepskydatahq/straumheim/internal/buffer"
+	"github.com/deepskydatahq/straumheim/internal/metrics"
+	"github.com/deepskydatahq/straumheim/internal/record"
+	"github.com/deepskydatahq/straumheim/internal/sink"
 )
 
 // mockSink records all writes for verification.

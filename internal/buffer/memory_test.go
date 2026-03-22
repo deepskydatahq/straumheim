@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/deepsky-data/straumheim/internal/record"
+	"github.com/deepskydatahq/straumheim/internal/record"
 )
 
 func makeRecords(n int) []record.Record {
