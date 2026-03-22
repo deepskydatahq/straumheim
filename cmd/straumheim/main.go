@@ -14,10 +14,13 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/deepsky-data/straumheim/internal/buffer"
 	"github.com/deepsky-data/straumheim/internal/config"
 	"github.com/deepsky-data/straumheim/internal/input"
+	"github.com/deepsky-data/straumheim/internal/metrics"
 	"github.com/deepsky-data/straumheim/internal/pipeline"
 	"github.com/deepsky-data/straumheim/internal/sink"
 )
@@ -69,14 +72,27 @@ func run() int {
 		cfg.Buffer.FlushInterval,
 	)
 
+	// Create Prometheus metrics with custom registry.
+	promReg := prometheus.NewRegistry()
+	met := metrics.NewMetrics(promReg)
+
+	// Collect sink names for metric labels.
+	sinkNames := make([]string, len(cfg.Sinks))
+	for i, sc := range cfg.Sinks {
+		sinkNames[i] = sc.Name
+	}
+
 	// Create pipeline engine.
-	engine := pipeline.NewEngine(buf, sinks)
+	engine := pipeline.NewEngine(buf, sinks, sinkNames, met)
 
 	// Set up Chi router.
 	r := chi.NewRouter()
 
 	// Health check endpoint.
 	r.Get("/health", healthHandler)
+
+	// Prometheus metrics endpoint.
+	r.Get("/metrics", promhttp.HandlerFor(promReg, promhttp.HandlerOpts{}).ServeHTTP)
 
 	// Register inputs.
 	registerInputs(r, cfg.Inputs, engine)

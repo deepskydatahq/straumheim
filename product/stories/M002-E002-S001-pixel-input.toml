@@ -1,0 +1,55 @@
+id = "M002-E002-S001"
+parent = "M002-E002"
+title = "Pixel input with config wiring"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = """GET /px converts query parameters into a Record payload and returns a 1x1 transparent GIF with no-cache headers. Includes schema-addressed variant and full config + main.go wiring."""
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "GET /px?event=signup&user_id=abc returns 200 with image/gif content-type and 1x1 transparent GIF body"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Query parameters become flat payload fields: {event: 'signup', user_id: 'abc'}"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Response includes Cache-Control: no-store, no-cache and Pragma: no-cache headers"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "GET /px/{vendor}/{name}/{version} sets Vendor, Schema, SchemaVersion on Record"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Record has Protocol=pixel, IP, UserAgent, Referer populated"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Flattened field populated (same as payload since it's already flat)"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "GET /px with no query params creates Record with empty payload"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "PixelConfig in config.go, config.example.yaml updated, main.go registerInputs handles 'pixel' case"
+
+[context]
+relevant_paths = ["internal/input/webhook.go", "internal/config/config.go", "cmd/straumheim/main.go", "config.example.yaml"]
+input_fixtures = []
+depends_on = []
+
+[handoff]
+implementation_hints = """Create internal/input/pixel.go. Very similar to webhook but simpler:
+GET only, query params to map[string]any (all values as strings). Reuse the 1x1 GIF constant
+from snowplow.go (or define in a shared location in the input package). Wire into config
+and main.go."""
+reference_files = ["internal/input/webhook.go"]

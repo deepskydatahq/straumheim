@@ -1,0 +1,45 @@
+id = "M002-E002"
+parent = "M002"
+title = "Pixel tracking input"
+status = "active"
+created = 2026-03-22
+depends_on = []
+
+[outcome]
+description = """A 1x1 transparent GIF pixel endpoint that tracks events from emails,
+AMP pages, and other constrained environments where JavaScript is unavailable.
+Query parameters become payload fields."""
+
+[job_story]
+description = """When I embed a tracking pixel in an email or AMP page, I want query
+parameters to become event fields, so that I can track opens and interactions without
+JavaScript."""
+
+[testing]
+approach = "agent-judgment"
+criteria = [
+    "GET /px returns 1x1 transparent GIF with Cache-Control: no-store",
+    "Query parameters become flat payload fields",
+    "GET /px/{vendor}/{name}/{version} sets schema fields on Record",
+    "Record has protocol=pixel, IP, User-Agent, Referer populated",
+    "Pixel input configurable via YAML, defaults to enabled=false",
+    "Wired into main.go and config",
+]
+validator_context = ["internal/input/"]
+
+[context]
+relevant_paths = [
+    "internal/input/webhook.go",
+    "internal/input/",
+    "internal/config/config.go",
+    "cmd/straumheim/main.go",
+    "config.example.yaml",
+]
+dependencies = []
+
+[notes]
+considerations = """Simple input: query params to flat key-value map. No nested objects.
+Returns 1x1 transparent GIF (hardcoded bytes). Cache-Control: no-store, no-cache to
+prevent browser/proxy caching. Shares extractIP() with webhook."""
+
+estimated_stories = 1

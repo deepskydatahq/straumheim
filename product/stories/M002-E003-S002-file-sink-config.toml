@@ -1,0 +1,38 @@
+id = "M002-E003-S002"
+parent = "M002-E003"
+title = "Wire file sink into config and main.go"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = """File sink is configurable via YAML config and wired into main.go's createSinks function."""
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "SinkConfig has output_dir and rotation_interval fields for file sink"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "createSinks in main.go handles type='file', creates FileSink with configured dir and rotation interval"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "config.example.yaml updated with file sink example including output_dir and rotation_interval"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Default rotation_interval is 5m when not specified"
+
+[context]
+relevant_paths = ["internal/config/config.go", "cmd/straumheim/main.go", "config.example.yaml"]
+input_fixtures = []
+depends_on = ["M002-E003-S001"]
+
+[handoff]
+implementation_hints = """Add output_dir string and rotation_interval time.Duration to SinkConfig.
+In createSinks, add case 'file'. Use sensible default for rotation (5m).
+Update config.example.yaml."""
+reference_files = ["cmd/straumheim/main.go", "internal/config/config.go"]

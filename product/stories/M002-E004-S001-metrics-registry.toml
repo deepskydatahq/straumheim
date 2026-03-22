@@ -1,0 +1,50 @@
+id = "M002-E004-S001"
+parent = "M002-E004"
+title = "Metrics collector with counters and histograms"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = """A Metrics struct in internal/metrics/ holds all Prometheus collectors for pipeline observability."""
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "NewMetrics(reg prometheus.Registerer) creates Metrics with all collectors registered"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "RecordReceived(protocol string) increments straumheim_records_received_total counter with protocol label"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "RecordDelivered(sink string) increments straumheim_records_delivered_total counter with sink label"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "RecordFailed(sink string) increments straumheim_records_failed_total counter with sink label"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "SetBufferSize(n int) sets straumheim_buffer_size_current gauge"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "ObserveFlushDuration(sink string, d time.Duration) observes straumheim_flush_duration_seconds histogram"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "All metrics use custom registry (not global default) for testability"
+
+[context]
+relevant_paths = ["internal/pipeline/engine.go"]
+input_fixtures = []
+depends_on = []
+
+[handoff]
+implementation_hints = """Create internal/metrics/metrics.go. Use prometheus.NewRegistry() in tests,
+pass prometheus.Registerer to constructor. Define all metric vectors with proper help strings.
+Method names map directly to pipeline events. Keep it simple: no interfaces, just a concrete struct."""
+reference_files = []

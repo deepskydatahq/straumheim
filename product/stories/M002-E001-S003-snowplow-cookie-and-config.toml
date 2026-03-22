@@ -1,0 +1,47 @@
+id = "M002-E001-S003"
+parent = "M002-E001"
+title = "Snowplow cookie handling and config wiring"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = """Snowplow input sets a first-party cookie for network_userid tracking and is wired into YAML config and main.go."""
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "First request without cookie: Set-Cookie header returned with UUID value, configurable name (default 'sp'), path=/, configurable TTL (default 1 year)"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Subsequent request with existing cookie: cookie value read and stored as network_userid in Record.Payload"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Cookie domain configurable, defaults to empty (browser auto-detects)"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "SnowplowConfig struct in config.go with enabled, path, cookie.enabled, cookie.name, cookie.domain, cookie.ttl fields"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "config.example.yaml updated with snowplow input section and cookie sub-config"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "main.go registerInputs handles 'snowplow' case, constructing SnowplowInput with config"
+
+[context]
+relevant_paths = ["internal/input/snowplow.go", "internal/config/config.go", "cmd/straumheim/main.go", "config.example.yaml"]
+input_fixtures = []
+depends_on = ["M002-E001-S002"]
+
+[handoff]
+implementation_hints = """Cookie handling: on each request, check for existing cookie by name.
+If present, read value as network_userid. If absent, generate UUID, set cookie.
+SnowplowInput constructor takes SnowplowConfig. Add SnowplowConfig to InputConfig or
+as a separate typed config. Wire into main.go registerInputs switch."""
+reference_files = ["internal/input/webhook.go", "cmd/straumheim/main.go", "internal/config/config.go"]

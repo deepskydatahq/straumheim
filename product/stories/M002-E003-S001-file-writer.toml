@@ -1,0 +1,55 @@
+id = "M002-E003-S001"
+parent = "M002-E003"
+title = "JSONL file writer with time-based rotation"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = """FileSink writes records as JSONL (one JSON object per line) to local filesystem files, rotating by time interval."""
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "var _ Sink = (*FileSink)(nil) compiles (interface compliance)"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Write(records) appends one JSON line per record to the current file"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Each JSON line is valid JSON and can be unmarshaled back to a Record"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "File naming: events-{RFC3339-compact-timestamp}.jsonl in configured output directory"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Output directory created automatically if it does not exist"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "After rotation interval (configurable, default 5m), next Write creates a new file"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Close() flushes and closes the current file"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Concurrent Write() calls are safe (protected by mutex)"
+
+[context]
+relevant_paths = ["internal/sink/stdout.go", "internal/sink/sink.go"]
+input_fixtures = []
+depends_on = []
+
+[handoff]
+implementation_hints = """Create internal/sink/file.go. Constructor: NewFileSink(dir string, rotationInterval time.Duration).
+Track currentFile *os.File and fileOpenedAt time.Time. On Write(), check if time.Since(fileOpenedAt) > rotationInterval,
+if so rotate. Use sync.Mutex to protect file access. Mode() returns SinkModeBatch.
+File name format: events-20260322T101530Z.jsonl (time.Now().UTC().Format('20060102T150405Z'))."""
+reference_files = ["internal/sink/stdout.go"]

@@ -1,0 +1,52 @@
+id = "M002-E001"
+parent = "M002"
+title = "Snowplow tracker protocol input"
+status = "active"
+created = 2026-03-22
+depends_on = []
+
+[outcome]
+description = """Existing Snowplow tracker SDKs (JS, iOS, Android, GTM) can point at
+Straumheim and events flow through the pipeline without any tracker-side changes.
+Supports GET /sp/i (pixel endpoint) and POST /sp/tp2 (tracker protocol v2) with
+cookie-based network_userid tracking."""
+
+[job_story]
+description = """When I have an existing Snowplow tracker setup, I want to change only
+the collector URL to point at Straumheim, so that my events flow to my own infrastructure
+without modifying any client-side code."""
+
+[testing]
+approach = "agent-judgment"
+criteria = [
+    "GET /sp/i with Snowplow query string returns 1x1 transparent GIF and creates a Record with protocol=snowplow",
+    "POST /sp/tp2 with base64-encoded payload array returns 200 and creates multiple Records",
+    "POST /sp/com.snowplowanalytics.snowplow/tp2 full path variant works identically",
+    "Cookie: Set-Cookie header returned with configurable name, domain, and TTL",
+    "Cookie: network_userid from cookie stored on Record payload",
+    "Body size limit enforced on POST",
+    "Snowplow input configurable via YAML, defaults to enabled=false",
+    "Wired into main.go and config",
+]
+validator_context = ["internal/input/"]
+
+[context]
+relevant_paths = [
+    "internal/input/webhook.go",
+    "internal/input/",
+    "internal/record/record.go",
+    "internal/config/config.go",
+    "cmd/straumheim/main.go",
+    "config.example.yaml",
+]
+dependencies = []
+
+[notes]
+considerations = """Snowplow tracker protocol details:
+- GET /sp/i: single event, query params include e (event type), url, page, referer, aid (app_id), etc.
+- POST /sp/tp2: JSON body with schema and data array, each element is a map of Snowplow fields
+- Cookie: first-party cookie for network_userid, UUID generated on first visit
+- extractIP() in webhook.go should be shared across inputs (same package, just export or share)
+- Collector adds metadata not meaning: don't parse UA, don't do geo, don't enrich"""
+
+estimated_stories = 3

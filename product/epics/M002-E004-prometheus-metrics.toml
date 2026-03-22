@@ -1,0 +1,46 @@
+id = "M002-E004"
+parent = "M002"
+title = "Prometheus metrics endpoint"
+status = "active"
+created = 2026-03-22
+depends_on = []
+
+[outcome]
+description = """GET /metrics exposes Prometheus text format metrics for pipeline health:
+records received/delivered, buffer utilization, and flush duration. Operators can
+scrape this with Prometheus and alert on pipeline issues."""
+
+[job_story]
+description = """When I operate Straumheim in production, I want to scrape /metrics with
+Prometheus, so that I can monitor pipeline throughput, detect sink failures, and set up
+alerts without reading logs."""
+
+[testing]
+approach = "agent-judgment"
+criteria = [
+    "GET /metrics returns Prometheus text exposition format",
+    "Metric: straumheim_records_received_total (counter, label: protocol)",
+    "Metric: straumheim_records_delivered_total (counter, label: sink)",
+    "Metric: straumheim_records_failed_total (counter, label: sink)",
+    "Metric: straumheim_buffer_size_current (gauge)",
+    "Metric: straumheim_flush_duration_seconds (histogram, label: sink)",
+    "Metrics are incremented at the correct pipeline stages",
+    "Wired into pipeline and exposed on HTTP server",
+]
+validator_context = ["internal/pipeline/", "cmd/straumheim/"]
+
+[context]
+relevant_paths = [
+    "internal/pipeline/engine.go",
+    "cmd/straumheim/main.go",
+    "internal/config/config.go",
+]
+dependencies = []
+
+[notes]
+considerations = """Use prometheus/client_golang library. Define a Metrics struct in
+internal/metrics/metrics.go that holds all metric collectors. Pass it to the pipeline
+engine so it can instrument ingest/flush. Expose /metrics via promhttp.Handler() on
+the Chi router. No global prometheus registry — create a custom one for testability."""
+
+estimated_stories = 2

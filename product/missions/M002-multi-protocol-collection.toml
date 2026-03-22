@@ -1,0 +1,135 @@
+# Mission: Multi-Protocol Collection
+# Complete the v1 input surface: Snowplow trackers, pixel tracking, file archival, and operational metrics
+
+id = "M002"
+title = "Multi-protocol collection: Snowplow, pixel, file sink, and metrics"
+status = "active"
+created = 2026-03-22
+
+[outcome]
+description = """
+A user points existing Snowplow tracker SDKs at Straumheim and events flow to Postgres
+without any tracker-side code changes. Email opens are tracked via a 1x1 pixel. Events
+are archived as JSONL files for offline analysis. Operators monitor pipeline health via
+Prometheus metrics. This completes the v1 input and observability surface.
+"""
+
+user_progress = "From 'webhook-only collection' to 'drop-in Snowplow replacement with pixel tracking, file archival, and production metrics'"
+
+[scope]
+in_scope = [
+    "Snowplow tracker protocol input (GET /sp/i, POST /sp/tp2) with cookie handling",
+    "Pixel input (GET /px with query params as payload, 1x1 transparent GIF response)",
+    "JSONL file sink (local filesystem, time-based rotation)",
+    "Prometheus metrics endpoint (GET /metrics)",
+    "Config additions for all new components",
+    "Wire new inputs and sinks into main.go",
+]
+out_of_scope = [
+    "Schema validation (future mission)",
+    "S3 file sink (v2 scope)",
+    "Parquet output format (v2 scope)",
+    "ClickHouse sink (v2 scope)",
+    "Segment-compatible input (v2 scope)",
+    "SQLite WAL buffer (v2 scope)",
+    "User agent parsing or geo lookup (collector adds metadata not meaning)",
+]
+
+[testing]
+approach = "integration-test"
+criteria = [
+    "GET /sp/i with Snowplow query string returns 1x1 transparent GIF and creates a Record with protocol=snowplow",
+    "POST /sp/tp2 with base64-encoded Snowplow payload returns 200 and creates Records",
+    "POST /sp/com.snowplowanalytics.snowplow/tp2 full path variant works identically",
+    "Snowplow cookie: Set-Cookie header returned with configurable name, domain, and TTL",
+    "Snowplow cookie: network_userid extracted from cookie and stored on Record",
+    "GET /px returns 1x1 transparent GIF with no-cache headers",
+    "GET /px query parameters become payload fields (event=signup&user_id=abc → {event: signup, user_id: abc})",
+    "GET /px/{vendor}/{name}/{version} sets schema fields on Record",
+    "JSONL file sink writes one JSON object per line to a file",
+    "JSONL file sink rotates files by time interval (configurable)",
+    "JSONL file sink creates output directory if it does not exist",
+    "GET /metrics returns Prometheus text format with pipeline metrics",
+    "Metrics include: records_received_total (by protocol), records_delivered_total (by sink), buffer_size_current, flush_duration_seconds",
+    "All new inputs enforce body size limits and validate Content-Type where applicable",
+    "Snowplow input handles both single-event GET and multi-event POST batches",
+    "Fan-out: all sinks (postgres, stdout, file) receive every record independently",
+    "Config: snowplow, pixel inputs and file sink configurable via YAML with sensible defaults",
+    "Config: new inputs default to enabled=false (opt-in complexity)",
+]
+
+validator_context = [
+    "internal/input/snowplow.go",
+    "internal/input/pixel.go",
+    "internal/sink/file.go",
+    "internal/metrics/metrics.go",
+    "cmd/straumheim/main.go",
+    "internal/config/config.go",
+    "config.example.yaml",
+]
+
+[context]
+related_docs = [
+    "VISION.md",
+    "init.md",
+]
+relevant_paths = [
+    "cmd/straumheim/",
+    "internal/input/",
+    "internal/sink/",
+    "internal/config/",
+    "internal/record/",
+    "internal/pipeline/",
+]
+
+[notes]
+considerations = """
+This mission builds on M001's working pipeline. The core architecture is proven —
+Record normalization, memory buffer, fan-out to sinks all work. M002 extends the
+input surface and adds file archival + observability.
+
+Key design decisions to make:
+
+1. **Snowplow protocol parsing:** The Snowplow tracker protocol uses base64-encoded
+   payloads with a specific field mapping (e → event type, url → page_url, etc.).
+   We need to decode the wire format into our Record, NOT replicate Snowplow's full
+   enrichment pipeline. Collector adds metadata, not meaning.
+
+2. **Snowplow cookie handling:** First-party cookie for network_userid. Configurable
+   name, domain, TTL. On first request: generate UUID, set cookie, store on Record.
+   On subsequent requests: read cookie, store on Record. Cookie domain defaults to
+   auto-detect from request Host header.
+
+3. **Snowplow GET vs POST:** GET /sp/i carries a single event in query params.
+   POST /sp/tp2 carries a JSON body with a "data" array of base64-encoded payloads,
+   producing multiple Records from one request.
+
+4. **Pixel input:** Simplest possible input. Query params become flat key-value payload.
+   No nested objects, no arrays — everything is a string. Returns 1x1 transparent GIF
+   with Cache-Control: no-store to prevent browser caching.
+
+5. **File sink:** JSONL format (one JSON object per line). Writes to a configurable
+   directory. Rotates files by time interval (default 5m). File naming:
+   events-{timestamp}.jsonl. Rotation creates a new file; old file is closed.
+   Must handle concurrent writes safely.
+
+6. **Prometheus metrics:** Use the prometheus/client_golang library. Expose standard
+   pipeline counters and histograms. The /metrics endpoint is separate from Chi router
+   — use promhttp.Handler() directly. Key metrics:
+   - records_received_total (counter, labels: protocol)
+   - records_delivered_total (counter, labels: sink)
+   - records_failed_total (counter, labels: sink)
+   - buffer_size_current (gauge)
+   - flush_duration_seconds (histogram, labels: sink)
+
+7. **Existing patterns to follow:** Look at webhook.go for input structure,
+   stdout.go for sink structure. The extractIP() helper in webhook.go should
+   be shared across inputs (move to a shared package or input-level helper).
+
+What is NOT in scope for M002:
+- Snowplow enrichments (UA parsing, geo lookup, campaign attribution)
+- Snowplow redirect endpoint (/r/tp2)
+- S3 sink (v2 — depends on cloud SDK)
+- Parquet format (v2 — depends on arrow library)
+- Schema validation (future mission)
+"""

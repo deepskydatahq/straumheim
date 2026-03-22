@@ -1,0 +1,53 @@
+id = "M002-E001-S002"
+parent = "M002-E001"
+title = "Snowplow POST /sp/tp2 endpoint"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = """POST /sp/tp2 parses a Snowplow tracker protocol v2 JSON body containing multiple events and creates a Record per event."""
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "POST /sp/tp2 with JSON body {schema: '...', data: [{e: 'pv', ...}, {e: 'se', ...}]} returns 200 and ingests 2 Records"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "POST /sp/com.snowplowanalytics.snowplow/tp2 full path variant works identically"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Each Record has Protocol=snowplow with Snowplow fields in Payload"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Body size limited to 1MB via MaxBytesReader"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Invalid JSON body returns 400 Bad Request"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Empty data array returns 200 with no records ingested"
+
+[context]
+relevant_paths = ["internal/input/snowplow.go"]
+input_fixtures = []
+depends_on = ["M002-E001-S001"]
+
+[handoff]
+implementation_hints = """Snowplow tracker protocol v2 POST body format:
+{
+  "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
+  "data": [
+    {"e": "pv", "url": "https://example.com", "aid": "my-app", ...},
+    {"e": "se", "se_ca": "video", "se_ac": "play", ...}
+  ]
+}
+Each element in data is a flat map of Snowplow fields. Create one Record per element.
+Share the Snowplow field → Record mapping with the GET handler."""
+reference_files = ["internal/input/snowplow.go"]

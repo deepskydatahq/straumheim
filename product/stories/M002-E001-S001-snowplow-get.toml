@@ -1,0 +1,49 @@
+id = "M002-E001-S001"
+parent = "M002-E001"
+title = "Snowplow GET /sp/i endpoint"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = """GET /sp/i parses Snowplow query parameters into a Record and returns a 1x1 transparent GIF."""
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "GET /sp/i with query param e=pv&url=https://example.com returns 200 with image/gif content-type and 1x1 transparent GIF body"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Record created with Protocol=snowplow, Payload containing Snowplow fields (e, url, page, referer, aid, p, etc.)"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Record has IP, UserAgent, Referer populated from request headers"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Record.Source set from aid (app_id) query parameter when present"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Flattened field populated from payload"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "DeviceTime set from dtm (device timestamp) query parameter when present, parsed as Unix milliseconds"
+
+[context]
+relevant_paths = ["internal/input/webhook.go", "internal/record/record.go"]
+input_fixtures = []
+depends_on = []
+
+[handoff]
+implementation_hints = """Create internal/input/snowplow.go. The 1x1 transparent GIF is a
+well-known 43-byte constant. Snowplow GET query params: e=event type, url=page URL,
+page=page title, referer=referer, aid=app_id, p=platform, dtm=device timestamp (ms),
+uid=domain userid, duid=domain userid (cookie), lang=language, res=resolution, etc.
+Map all query params into Payload as flat key-value pairs. Use extractIP() from the
+same package."""
+reference_files = ["internal/input/webhook.go"]

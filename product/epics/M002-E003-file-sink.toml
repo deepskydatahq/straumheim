@@ -1,0 +1,48 @@
+id = "M002-E003"
+parent = "M002"
+title = "JSONL file sink"
+status = "active"
+created = 2026-03-22
+depends_on = []
+
+[outcome]
+description = """Events are archived as JSONL files on the local filesystem with
+time-based rotation. Enables offline analysis with DuckDB, grep, or any tool that
+reads newline-delimited JSON."""
+
+[job_story]
+description = """When events flow through the pipeline, I want them archived as JSONL
+files on disk, so that I have a local backup and can analyze them with DuckDB or grep
+without querying Postgres."""
+
+[testing]
+approach = "agent-judgment"
+criteria = [
+    "JSONL file sink writes one JSON object per line",
+    "Files rotate by configurable time interval (default 5m)",
+    "Output directory created if it does not exist",
+    "File naming: events-{timestamp}.jsonl",
+    "Concurrent writes are safe",
+    "Fan-out: file sink receives every record independently from other sinks",
+    "Configurable via YAML, wired into main.go",
+]
+validator_context = ["internal/sink/"]
+
+[context]
+relevant_paths = [
+    "internal/sink/stdout.go",
+    "internal/sink/sink.go",
+    "internal/sink/",
+    "internal/config/config.go",
+    "cmd/straumheim/main.go",
+    "config.example.yaml",
+]
+dependencies = []
+
+[notes]
+considerations = """Follow stdout.go pattern. Use sync.Mutex for concurrent write safety.
+Rotation: track current file and its open time; on Write(), check if rotation interval
+has elapsed, if so close current file and open new one. File path format:
+{output_dir}/events-{RFC3339-compact}.jsonl"""
+
+estimated_stories = 2

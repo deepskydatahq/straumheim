@@ -1,0 +1,47 @@
+id = "M002-E004-S002"
+parent = "M002-E004"
+title = "Wire metrics into pipeline and expose /metrics"
+status = "ready"
+created = 2026-03-22
+
+[outcome]
+description = """Pipeline engine calls metrics at ingest/flush points and GET /metrics serves Prometheus text format."""
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Pipeline.Ingest increments records_received_total with the record's protocol"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Pipeline flush increments records_delivered_total per sink on success"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Pipeline flush increments records_failed_total per sink on error"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Pipeline flush observes flush_duration_seconds per sink"
+
+[[acceptance_criteria.criteria]]
+test = "integration"
+description = "GET /metrics returns HTTP 200 with text/plain content containing straumheim_ prefixed metrics"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "main.go creates Metrics, passes to pipeline engine, mounts promhttp.Handler on /metrics"
+
+[context]
+relevant_paths = ["internal/pipeline/engine.go", "cmd/straumheim/main.go", "internal/metrics/metrics.go"]
+input_fixtures = []
+depends_on = ["M002-E004-S001"]
+
+[handoff]
+implementation_hints = """Modify pipeline.NewEngine to accept optional *metrics.Metrics (nil-safe: if nil, skip instrumentation).
+Add metric calls in Ingest() and the flush goroutine. In main.go, create prometheus.NewRegistry(),
+create metrics.NewMetrics(reg), pass to engine, mount promhttp.HandlerFor(reg, ...) on /metrics.
+Update config.example.yaml if needed."""
+reference_files = ["internal/pipeline/engine.go", "cmd/straumheim/main.go"]
