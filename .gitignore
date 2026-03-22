@@ -1,0 +1,35 @@
+# Binaries
+bin/
+straumheim
+*.exe
+
+# Test artifacts
+config.test.yaml
+/tmp/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code local artifacts
+.claude/worktrees/
+.claude/skills/golang-pro
+.claude/hooks/
+skills-lock.json
+
+# Beads local state (issues.jsonl is the source of truth, kept in repo)
+.beads/beads.db
+.beads/beads.db-wal
+.beads/beads.db-shm
+.beads/daemon.log
+.beads/daemon-error
+.beads/interactions.jsonl
+.beads/last-touched
+.beads/.jsonl.lock
+.beads/.local_version
