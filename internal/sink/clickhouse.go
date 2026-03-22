@@ -201,7 +201,7 @@ func (s *ClickHouseSink) flattenedColumns() []string {
 func buildCHRow(r record.Record, flatCols []string) map[string]any {
 	row := map[string]any{
 		"id":             r.ID,
-		"timestamp":      r.Timestamp.UTC().Format("2006-01-02T15:04:05Z"),
+		"timestamp":      r.Timestamp.UTC().Format("2006-01-02 15:04:05.000"),
 		"protocol":       r.Protocol,
 		"source":         r.Source,
 		"ip":             r.IP,
@@ -214,7 +214,7 @@ func buildCHRow(r record.Record, flatCols []string) map[string]any {
 
 	// device_time: nullable.
 	if r.DeviceTime != nil {
-		row["device_time"] = r.DeviceTime.UTC().Format("2006-01-02T15:04:05Z")
+		row["device_time"] = r.DeviceTime.UTC().Format("2006-01-02 15:04:05.000")
 	} else {
 		row["device_time"] = nil
 	}
