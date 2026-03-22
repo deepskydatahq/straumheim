@@ -1,0 +1,94 @@
+# Mission: README and Documentation
+# First impression matters — make Straumheim discoverable and usable from the GitHub page
+
+id = "M003"
+title = "README, quickstart, and docker-compose example"
+status = "active"
+created = 2026-03-22
+
+[outcome]
+description = """
+Someone lands on the GitHub repo and within 5 minutes understands what Straumheim does,
+runs it locally with docker-compose, sends a test event, and sees it in Postgres. The
+README is the landing page, the quickstart is the onboarding, and the config reference
+is the daily driver.
+"""
+
+user_progress = "From 'public repo with no docs' to 'zero-to-events-flowing in 5 minutes'"
+
+[scope]
+in_scope = [
+    "README.md with vision, architecture diagram, feature list, and badges",
+    "Quickstart section: docker-compose up, curl a test event, query Postgres",
+    "docker-compose.yaml with Straumheim + Postgres for local development",
+    "Configuration reference in README covering all inputs, sinks, and buffer options",
+    "Update VALUES.md status for shipped levels (L01-L05)",
+]
+out_of_scope = [
+    "Docs website (future — README is sufficient for now)",
+    "API reference beyond what's in config.example.yaml",
+    "Contributing guide (future mission)",
+    "CI/CD setup (future mission)",
+]
+
+[testing]
+approach = "agent-judgment"
+criteria = [
+    "README.md exists with project description, architecture diagram, and feature list",
+    "Quickstart section has a complete docker-compose.yaml that starts Straumheim + Postgres",
+    "Quickstart includes curl commands for webhook, snowplow, and pixel",
+    "Quickstart includes psql command to verify events landed in Postgres",
+    "Configuration reference covers all YAML keys with descriptions and defaults",
+    "docker-compose.yaml works (valid YAML, correct service wiring)",
+    "VALUES.md status updated: L01-L03 shipped, L04 shipped, L05 partially shipped",
+    "No sensitive data in any example configs",
+    "README includes MIT license badge and link",
+]
+
+validator_context = [
+    "README.md",
+    "docker-compose.yaml",
+    "VALUES.md",
+]
+
+[context]
+related_docs = [
+    "VISION.md",
+    "VALUES.md",
+    "init.md",
+    "config.example.yaml",
+]
+relevant_paths = [
+    "README.md",
+    "docker-compose.yaml",
+    "VALUES.md",
+    "config.example.yaml",
+    "Dockerfile",
+]
+
+[notes]
+considerations = """
+This is a documentation mission, not a code mission. The goal is to make the public
+GitHub repo look professional and immediately useful.
+
+README structure (based on VISION.md and successful OSS projects):
+1. One-liner + badge row
+2. What is Straumheim (3 sentences)
+3. Why (the problem it solves — 1 paragraph)
+4. Quickstart (docker-compose up, send event, query)
+5. Architecture diagram (ASCII)
+6. Features (what's shipped)
+7. Configuration reference
+8. Inputs (webhook, snowplow, pixel)
+9. Sinks (postgres, file, stdout)
+10. Buffer and metrics
+11. Roadmap link (point to VALUES.md)
+12. License
+
+docker-compose.yaml should include:
+- straumheim service with config volume and env vars
+- postgres service with events database
+- A config.yaml embedded or mounted that enables all inputs
+
+Keep it concise. The README should be scannable in 30 seconds and actionable in 5 minutes.
+"""

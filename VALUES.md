@@ -25,11 +25,11 @@ Levels build on each other. Lower levels are prerequisites for higher ones.
 
 | Level | Name | Tier | Status |
 |-------|------|------|--------|
-| L01 | Multi-Protocol Collection | Core Pipeline | designed |
-| L02 | Record Normalization | Core Pipeline | designed |
-| L03 | Batch Delivery | Core Pipeline | designed |
-| L04 | Warehouse Sink | Destination Coverage | designed |
-| L05 | File & Object Storage | Destination Coverage | designed |
+| L01 | Multi-Protocol Collection | Core Pipeline | **shipped** |
+| L02 | Record Normalization | Core Pipeline | **shipped** |
+| L03 | Batch Delivery | Core Pipeline | **shipped** |
+| L04 | Warehouse Sink | Destination Coverage | **shipped** |
+| L05 | File & Object Storage | Destination Coverage | **shipped** (JSONL local; S3/Parquet planned) |
 | L06 | Columnar Analytics | Destination Coverage | planned |
 | L07 | Schema Validation | Data Quality | planned |
 | L08 | Deduplication | Data Quality | planned |
@@ -54,7 +54,7 @@ These levels deliver value the moment someone runs `docker run straumheim`. The 
 ### L01: Multi-Protocol Collection
 > "Point your Snowplow tracker, webhook, or pixel at one endpoint — it handles all of them."
 
-**Status:** designed
+**Status:** shipped
 **Scope:** v1
 
 **What it delivers:** HTTP endpoints that speak Snowplow tracker protocol (GET pixel + POST tp2), accept generic JSON webhooks, and collect pixel tracking hits. Each protocol gets its own route prefix and wire format parser. Snowplow cookie handling included.
@@ -66,7 +66,7 @@ These levels deliver value the moment someone runs `docker run straumheim`. The 
 ### L02: Record Normalization
 > "Every event becomes a Record — same structure, same metadata, regardless of where it came from."
 
-**Status:** designed
+**Status:** shipped
 **Scope:** v1
 
 **What it delivers:** A common `Record` structure with UUIDv7 IDs, collector and device timestamps, protocol tag, source identifier, raw payload, and flattened payload. JSON flattening converts nested objects to dot-notation keys for warehouse compatibility. Collector metadata (IP, user agent, referer) is extracted from every request.
@@ -78,7 +78,7 @@ These levels deliver value the moment someone runs `docker run straumheim`. The 
 ### L03: Batch Delivery
 > "Events flow from buffer to destination — batched by count or time, fan-out to multiple sinks."
 
-**Status:** designed
+**Status:** shipped
 **Scope:** v1
 
 **What it delivers:** An in-memory buffer (Go channels) that accumulates records and flushes them to configured sinks by batch count or time interval. Each sink receives every record. Sinks operate independently — a slow Postgres doesn't block stdout output.
@@ -98,7 +98,7 @@ These levels expand where events can be delivered. Each destination is a sink im
 ### L04: Warehouse Sink
 > "Events in Postgres, queryable with SQL, auto-schema included — no DDL management."
 
-**Status:** designed
+**Status:** shipped
 **Scope:** v1
 
 **What it delivers:** A Postgres sink using `COPY FROM STDIN` for batch ingestion (fastest possible Postgres write path). Auto-creates the events table on first write. Auto-adds columns when new fields appear in records. Invalid records go to a separate table for debugging, never silently dropped.
@@ -110,7 +110,7 @@ These levels expand where events can be delivered. Each destination is a sink im
 ### L05: File & Object Storage
 > "JSONL files locally, Parquet on S3 — archive everything, query with DuckDB."
 
-**Status:** designed
+**Status:** shipped (JSONL local); S3 and Parquet planned for v2
 **Scope:** v1 (JSONL local), v2 (S3, Parquet)
 
 **What it delivers:** A file sink writing JSONL (one JSON object per line) to local filesystem, with time-based or size-based file rotation. S3-compatible output (MinIO, AWS S3, R2) as fast-follow. Parquet format for efficient analytical queries.

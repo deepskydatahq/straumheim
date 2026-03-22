@@ -1,0 +1,31 @@
+services:
+  straumheim:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.example.yaml:/etc/straumheim/config.yaml
+    environment:
+      POSTGRES_DSN: postgres://straumheim:secret@postgres:5432/events?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: events
+      POSTGRES_USER: straumheim
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U straumheim -d events"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
