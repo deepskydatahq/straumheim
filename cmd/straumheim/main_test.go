@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -279,4 +281,100 @@ func TestRegisterInputsPixel(t *testing.T) {
 	}
 
 	engine.Close()
+}
+
+// newTestRouterWithCORS creates a Chi router with CORS middleware configured with the given origins.
+func newTestRouterWithCORS(origins []string) *chi.Mux {
+	r := chi.NewRouter()
+	r.Use(middleware.Recoverer)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: origins,
+		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type"},
+	}))
+	r.Post("/webhook", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	r.Get("/health", healthHandler)
+	return r
+}
+
+func TestCORS_OptionsReturnsAllowOrigin(t *testing.T) {
+	r := newTestRouterWithCORS([]string{"https://example.com"})
+
+	req := httptest.NewRequest(http.MethodOptions, "/webhook", nil)
+	req.Header.Set("Origin", "https://example.com")
+	req.Header.Set("Access-Control-Request-Method", "POST")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	acao := w.Header().Get("Access-Control-Allow-Origin")
+	if acao != "https://example.com" {
+		t.Fatalf("expected Access-Control-Allow-Origin 'https://example.com', got %q", acao)
+	}
+}
+
+func TestCORS_OptionsReturnsAllowMethods(t *testing.T) {
+	r := newTestRouterWithCORS([]string{"https://example.com"})
+
+	// Verify each allowed method is accepted in a preflight request.
+	for _, method := range []string{"GET", "POST", "OPTIONS"} {
+		req := httptest.NewRequest(http.MethodOptions, "/webhook", nil)
+		req.Header.Set("Origin", "https://example.com")
+		req.Header.Set("Access-Control-Request-Method", method)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		acam := w.Header().Get("Access-Control-Allow-Methods")
+		if acam == "" {
+			t.Errorf("expected Access-Control-Allow-Methods for request method %s, got empty", method)
+		}
+	}
+}
+
+func TestCORS_OptionsReturnsAllowHeaders(t *testing.T) {
+	r := newTestRouterWithCORS([]string{"https://example.com"})
+
+	req := httptest.NewRequest(http.MethodOptions, "/webhook", nil)
+	req.Header.Set("Origin", "https://example.com")
+	req.Header.Set("Access-Control-Request-Method", "POST")
+	req.Header.Set("Access-Control-Request-Headers", "Content-Type")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	acah := w.Header().Get("Access-Control-Allow-Headers")
+	if !strings.Contains(strings.ToLower(acah), "content-type") {
+		t.Errorf("expected Access-Control-Allow-Headers to contain Content-Type, got %q", acah)
+	}
+}
+
+func TestCORS_WildcardAllowsAllOrigins(t *testing.T) {
+	r := newTestRouterWithCORS([]string{"*"})
+
+	req := httptest.NewRequest(http.MethodOptions, "/webhook", nil)
+	req.Header.Set("Origin", "https://any-site.example.org")
+	req.Header.Set("Access-Control-Request-Method", "POST")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	acao := w.Header().Get("Access-Control-Allow-Origin")
+	if acao != "*" {
+		t.Fatalf("expected Access-Control-Allow-Origin '*', got %q", acao)
+	}
+}
+
+func TestRecovery_PanicReturns500(t *testing.T) {
+	r := chi.NewRouter()
+	r.Use(middleware.Recoverer)
+	r.Get("/panic", func(w http.ResponseWriter, r *http.Request) {
+		panic("test panic")
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/panic", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", w.Code)
+	}
 }

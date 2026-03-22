@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -87,6 +89,16 @@ func run() int {
 
 	// Set up Chi router.
 	r := chi.NewRouter()
+
+	// Recovery middleware catches panics and returns 500.
+	r.Use(middleware.Recoverer)
+
+	// CORS middleware with configurable origins.
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: cfg.Server.CORS.AllowedOrigins,
+		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type"},
+	}))
 
 	// Health check endpoint.
 	r.Get("/health", healthHandler)

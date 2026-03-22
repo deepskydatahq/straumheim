@@ -21,8 +21,14 @@ type Config struct {
 
 // ServerConfig holds HTTP server settings.
 type ServerConfig struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
+	Host string     `yaml:"host"`
+	Port int        `yaml:"port"`
+	CORS CORSConfig `yaml:"cors"`
+}
+
+// CORSConfig holds CORS middleware settings.
+type CORSConfig struct {
+	AllowedOrigins []string `yaml:"allowed_origins"`
 }
 
 // InputConfig holds settings for an input endpoint.
@@ -113,5 +119,8 @@ func applyDefaults(cfg *Config) {
 	}
 	if cfg.Buffer.FlushCount == 0 {
 		cfg.Buffer.FlushCount = 500
+	}
+	if len(cfg.Server.CORS.AllowedOrigins) == 0 {
+		cfg.Server.CORS.AllowedOrigins = []string{"*"}
 	}
 }
