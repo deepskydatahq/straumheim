@@ -44,6 +44,14 @@ sinks:
     flush_interval: 10s
     auto_schema: true
 
+  # File sink — writes records as JSONL files with time-based rotation.
+  # Useful for offline analysis with DuckDB, grep, or any JSONL-compatible tool.
+  - name: archive
+    type: file
+    mode: batch
+    output_dir: /var/lib/straumheim/events  # directory for JSONL files (created automatically)
+    rotation_interval: 5m                   # rotate to a new file after this duration (default: 5m)
+
   # Stdout sink — prints each record as a JSON line (useful for debugging).
   - name: debug
     type: stdout

@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -69,6 +70,44 @@ func TestCreateSinksPostgresNoDSN(t *testing.T) {
 	_, err := createSinks(configs)
 	if err == nil {
 		t.Fatal("expected error for postgres sink without DSN")
+	}
+}
+
+func TestCreateSinksFile(t *testing.T) {
+	dir := t.TempDir()
+	configs := []config.SinkConfig{
+		{Name: "archive", Type: "file", OutputDir: dir, RotationInterval: 10 * time.Minute},
+	}
+	sinks, err := createSinks(configs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(sinks) != 1 {
+		t.Fatalf("expected 1 sink, got %d", len(sinks))
+	}
+}
+
+func TestCreateSinksFileDefaultRotation(t *testing.T) {
+	dir := t.TempDir()
+	configs := []config.SinkConfig{
+		{Name: "archive", Type: "file", OutputDir: dir},
+	}
+	sinks, err := createSinks(configs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(sinks) != 1 {
+		t.Fatalf("expected 1 sink, got %d", len(sinks))
+	}
+}
+
+func TestCreateSinksFileNoOutputDir(t *testing.T) {
+	configs := []config.SinkConfig{
+		{Name: "archive", Type: "file"},
+	}
+	_, err := createSinks(configs)
+	if err == nil {
+		t.Fatal("expected error for file sink without output_dir")
 	}
 }
 

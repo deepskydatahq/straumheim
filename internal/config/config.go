@@ -55,14 +55,16 @@ type BufferConfig struct {
 
 // SinkConfig holds settings for an output sink.
 type SinkConfig struct {
-	Name          string        `yaml:"name"`
-	Type          string        `yaml:"type"`
-	Mode          string        `yaml:"mode"`
-	DSN           string        `yaml:"dsn"`
-	Table         string        `yaml:"table"`
-	BatchSize     int           `yaml:"batch_size"`
-	FlushInterval time.Duration `yaml:"flush_interval"`
-	AutoSchema    bool          `yaml:"auto_schema"`
+	Name             string        `yaml:"name"`
+	Type             string        `yaml:"type"`
+	Mode             string        `yaml:"mode"`
+	DSN              string        `yaml:"dsn"`
+	Table            string        `yaml:"table"`
+	BatchSize        int           `yaml:"batch_size"`
+	FlushInterval    time.Duration `yaml:"flush_interval"`
+	AutoSchema       bool          `yaml:"auto_schema"`
+	OutputDir        string        `yaml:"output_dir"`
+	RotationInterval time.Duration `yaml:"rotation_interval"`
 }
 
 // LoadConfig reads a YAML file, substitutes ${ENV_VAR} references, and

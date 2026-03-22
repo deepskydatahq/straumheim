@@ -149,6 +149,15 @@ func createSinks(configs []config.SinkConfig) ([]sink.Sink, error) {
 				return nil, fmt.Errorf("postgres sink %q requires dsn", sc.Name)
 			}
 			sinks = append(sinks, sink.NewPostgresSink(sc.DSN))
+		case "file":
+			if sc.OutputDir == "" {
+				return nil, fmt.Errorf("file sink %q requires output_dir", sc.Name)
+			}
+			rotation := sc.RotationInterval
+			if rotation == 0 {
+				rotation = 5 * time.Minute
+			}
+			sinks = append(sinks, sink.NewFileSink(sc.OutputDir, rotation))
 		default:
 			return nil, fmt.Errorf("unknown sink type: %q", sc.Type)
 		}
