@@ -15,7 +15,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-
 	"github.com/deepsky-data/straumheim/internal/buffer"
 	"github.com/deepsky-data/straumheim/internal/config"
 	"github.com/deepsky-data/straumheim/internal/input"
