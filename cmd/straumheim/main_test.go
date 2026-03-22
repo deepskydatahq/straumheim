@@ -132,3 +132,28 @@ func TestRegisterInputsSnowplow(t *testing.T) {
 
 	engine.Close()
 }
+
+func TestRegisterInputsPixel(t *testing.T) {
+	r := chi.NewRouter()
+	buf := buffer.NewMemoryBuffer(100, 10, 1000000000)
+	engine := pipeline.NewEngine(buf, []sink.Sink{})
+
+	inputs := map[string]config.InputConfig{
+		"pixel": {Enabled: true, Path: "/px"},
+	}
+	registerInputs(r, inputs, engine)
+
+	// Send a pixel request to verify it's registered.
+	req := httptest.NewRequest(http.MethodGet, "/px?event=test", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	if ct := w.Header().Get("Content-Type"); ct != "image/gif" {
+		t.Errorf("expected Content-Type 'image/gif', got %q", ct)
+	}
+
+	engine.Close()
+}

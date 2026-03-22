@@ -182,6 +182,10 @@ func registerInputs(r chi.Router, inputs map[string]config.InputConfig, p pipeli
 			sp := input.NewSnowplowInput(cfg)
 			sp.Register(r, p)
 			slog.Info("registered input", "name", name, "protocol", sp.Protocol())
+		case "pixel":
+			px := input.NewPixel()
+			px.Register(r, p)
+			slog.Info("registered input", "name", name, "protocol", px.Protocol())
 		default:
 			slog.Warn("unknown input type, skipping", "name", name)
 		}
