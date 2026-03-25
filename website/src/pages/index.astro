@@ -1,0 +1,709 @@
+---
+---
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Straumheim — Self-hosted event collection. Single binary. Zero dependencies.</title>
+  <meta name="description" content="Self-hosted event collection pipeline. Single Go binary, zero dependencies, warehouse delivery to Postgres, ClickHouse, and JSONL. Your data, your infrastructure." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">Straumheim</a>
+      <div class="nav-links">
+        <a href="https://github.com/deepskydatahq/straumheim" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h1 class="hero-title">Self-hosted event collection.<br />Single binary. Zero dependencies.</h1>
+      <p class="hero-subtitle">Your data, your infrastructure. One Go binary collects events from Snowplow trackers, webhooks, and tracking pixels — then delivers them to your warehouse.</p>
+      <div class="hero-install">
+        <code>docker pull ghcr.io/deepskydatahq/straumheim:latest</code>
+      </div>
+      <div class="hero-actions">
+        <a href="https://github.com/deepskydatahq/straumheim#quick-start" class="btn btn-primary">Get Started</a>
+        <a href="https://github.com/deepskydatahq/straumheim" class="btn btn-secondary" target="_blank" rel="noopener">View on GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features">
+    <div class="container">
+      <h2 class="section-title">Everything you need, nothing you don't</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+          </div>
+          <h3>Single Binary</h3>
+          <p>One Go binary, one YAML config. Deploy with <code>docker run</code>. No Kafka, no Redis, no queues.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <h3>Multi-Protocol</h3>
+          <p>Snowplow trackers, webhooks, and tracking pixels. One collector for all your event sources.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg>
+          </div>
+          <h3>Zero Dependencies</h3>
+          <p>No infrastructure requirements beyond the binary itself. Runs on a $5/month VPS with unlimited events.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+          </div>
+          <h3>Warehouse Delivery</h3>
+          <p>Batch delivery to Postgres (COPY), ClickHouse (HTTP), JSONL files. Auto-schema evolution.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Code Walkthrough -->
+  <section class="walkthrough">
+    <div class="container">
+      <h2 class="section-title">From zero to collecting events in minutes</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header">
+            <span class="step-number">1</span>
+            <h3>Install</h3>
+          </div>
+          <div class="code-block">
+            <div class="code-bar"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">terminal</span></div>
+            <pre><code>$ docker pull ghcr.io/deepskydatahq/straumheim:latest</code></pre>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header">
+            <span class="step-number">2</span>
+            <h3>Configure</h3>
+          </div>
+          <div class="code-block">
+            <div class="code-bar"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">config.yaml</span></div>
+            <pre><code>server:
+  port: 8080
+
+inputs:
+  webhook:
+    enabled: true
+    path: /webhook
+
+sinks:
+  postgres:
+    enabled: true
+    connection_string: postgres://localhost:5432/events
+    table: events
+    batch_size: 1000</code></pre>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header">
+            <span class="step-number">3</span>
+            <h3>Collect events</h3>
+          </div>
+          <div class="code-block">
+            <div class="code-bar"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">terminal</span></div>
+            <pre><code>$ curl -X POST http://localhost:8080/webhook \
+    -H "Content-Type: application/json" \
+    -d '{"event": "signup", "user_id": "abc123"}'
+
+{"status":"ok","events_received":1}</code></pre>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header">
+            <span class="step-number">4</span>
+            <h3>Query your data</h3>
+          </div>
+          <div class="code-block">
+            <div class="code-bar"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">psql</span></div>
+            <pre><code>SELECT id, protocol, payload FROM events;
+
+       id       | protocol |              payload
+----------------+----------+-----------------------------------
+ ev_1a2b3c4d   | webhook  | {"event":"signup","user_id":"abc123"}
+(1 row)</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Table -->
+  <section class="comparison">
+    <div class="container">
+      <h2 class="section-title">How Straumheim compares</h2>
+      <div class="table-wrapper">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Segment</th>
+              <th>Snowplow OSS</th>
+              <th class="highlight-col">Straumheim</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="row-label">Cost</td>
+              <td>$120/mo for 10K MTU</td>
+              <td>Free (self-hosted)</td>
+              <td class="highlight-col">Free (self-hosted)</td>
+            </tr>
+            <tr>
+              <td class="row-label">Infrastructure</td>
+              <td>Managed (vendor)</td>
+              <td>Kafka/Kinesis + Spark/Beam</td>
+              <td class="highlight-col">Single binary</td>
+            </tr>
+            <tr>
+              <td class="row-label">Setup time</td>
+              <td>Minutes</td>
+              <td>Days/weeks</td>
+              <td class="highlight-col">Minutes</td>
+            </tr>
+            <tr>
+              <td class="row-label">Data ownership</td>
+              <td>Third-party servers</td>
+              <td>Your infrastructure</td>
+              <td class="highlight-col">Your infrastructure</td>
+            </tr>
+            <tr>
+              <td class="row-label">Tracker support</td>
+              <td>Segment SDKs only</td>
+              <td>Snowplow SDKs</td>
+              <td class="highlight-col">Snowplow SDKs + webhooks + pixels</td>
+            </tr>
+            <tr>
+              <td class="row-label">Destinations</td>
+              <td>Limited free, paid add-ons</td>
+              <td>S3/GCS/Redshift</td>
+              <td class="highlight-col">Postgres, ClickHouse, JSONL, stdout</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer CTA -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-cta">
+        <h2>Ready to own your event data?</h2>
+        <p>Get started with Straumheim in minutes. Pull the Docker image, add a config file, and start collecting.</p>
+        <div class="footer-install">
+          <code>docker pull ghcr.io/deepskydatahq/straumheim:latest</code>
+        </div>
+        <div class="footer-actions">
+          <a href="https://github.com/deepskydatahq/straumheim#quick-start" class="btn btn-primary">Get Started</a>
+          <a href="https://github.com/deepskydatahq/straumheim" class="btn btn-secondary" target="_blank" rel="noopener">GitHub Repository</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>Straumheim is open source under the MIT License. Part of the -heim family alongside <a href="https://fyrnheim.dev">Fyrnheim</a>.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: #0a0a0a;
+    color: #f5f5f5;
+    line-height: 1.6;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  /* Navigation */
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(10, 10, 10, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(14, 165, 233, 0.15);
+  }
+
+  .nav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .nav-logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0ea5e9;
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+  }
+
+  .nav-links a {
+    color: #a3a3a3;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover {
+    color: #0ea5e9;
+  }
+
+  /* Hero */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 6rem 2rem 4rem;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background-image: url('/images/hero-bg.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(10, 10, 10, 0.7) 0%,
+      rgba(10, 10, 10, 0.85) 50%,
+      rgba(10, 10, 10, 0.95) 100%
+    );
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    max-width: 800px;
+  }
+
+  .hero-title {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #f5f5f5 0%, #d4d4d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1.1rem, 2vw, 1.35rem);
+    color: #a3a3a3;
+    max-width: 600px;
+    margin: 0 auto 2rem;
+    line-height: 1.7;
+  }
+
+  .hero-install {
+    display: inline-block;
+    background: rgba(14, 165, 233, 0.08);
+    border: 1px solid rgba(14, 165, 233, 0.25);
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .hero-install code {
+    color: #0ea5e9;
+    font-size: 1.05rem;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.85rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: #0ea5e9;
+    color: #0a0a0a;
+  }
+
+  .btn-primary:hover {
+    background: #0284c7;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 24px rgba(14, 165, 233, 0.3);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: #f5f5f5;
+    border: 1px solid rgba(245, 245, 245, 0.2);
+  }
+
+  .btn-secondary:hover {
+    border-color: rgba(14, 165, 233, 0.5);
+    color: #0ea5e9;
+  }
+
+  /* Features */
+  .features {
+    padding: 6rem 0;
+    background: #0a0a0a;
+  }
+
+  .section-title {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 3.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .feature-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 2rem;
+    transition: all 0.3s;
+  }
+
+  .feature-card:hover {
+    border-color: rgba(14, 165, 233, 0.3);
+    background: rgba(14, 165, 233, 0.03);
+    transform: translateY(-2px);
+  }
+
+  .feature-icon {
+    color: #0ea5e9;
+    margin-bottom: 1rem;
+  }
+
+  .feature-card h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .feature-card p {
+    color: #a3a3a3;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .feature-card code {
+    color: #22d3ee;
+    font-size: 0.875rem;
+    background: rgba(14, 165, 233, 0.08);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+  }
+
+  /* Walkthrough */
+  .walkthrough {
+    padding: 6rem 0;
+    background: #0f0f0f;
+  }
+
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(14, 165, 233, 0.15);
+    color: #0ea5e9;
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .step-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  .code-block {
+    background: #141414;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .code-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .code-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .code-label {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: #737373;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .code-block pre {
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+  }
+
+  .code-block code {
+    font-size: 0.875rem;
+    line-height: 1.7;
+    color: #d4d4d4;
+  }
+
+  /* Comparison */
+  .comparison {
+    padding: 6rem 0;
+    background: #0a0a0a;
+  }
+
+  .table-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    overflow-x: auto;
+    padding: 0 2rem;
+  }
+
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding: 1rem 1.25rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .comparison-table thead th {
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .comparison-table .highlight-col {
+    background: rgba(14, 165, 233, 0.05);
+    color: #22d3ee;
+  }
+
+  .comparison-table thead .highlight-col {
+    color: #0ea5e9;
+  }
+
+  .comparison-table .row-label {
+    font-weight: 600;
+    color: #e5e5e5;
+    white-space: nowrap;
+  }
+
+  .comparison-table td:not(.row-label):not(.highlight-col) {
+    color: #a3a3a3;
+  }
+
+  /* Footer */
+  .footer {
+    padding: 6rem 0 2rem;
+    background: #0f0f0f;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .footer-cta {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto 4rem;
+  }
+
+  .footer-cta h2 {
+    font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+  }
+
+  .footer-cta p {
+    color: #a3a3a3;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    line-height: 1.7;
+  }
+
+  .footer-install {
+    display: inline-block;
+    background: rgba(14, 165, 233, 0.08);
+    border: 1px solid rgba(14, 165, 233, 0.25);
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .footer-install code {
+    color: #0ea5e9;
+    font-size: 1.05rem;
+  }
+
+  .footer-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .footer-bottom {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .footer-bottom p {
+    color: #525252;
+    font-size: 0.875rem;
+  }
+
+  .footer-bottom a {
+    color: #0ea5e9;
+    text-decoration: none;
+  }
+
+  .footer-bottom a:hover {
+    color: #22d3ee;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero {
+      padding: 5rem 1.5rem 3rem;
+    }
+
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .nav-links {
+      gap: 1rem;
+    }
+
+    .comparison-table {
+      font-size: 0.85rem;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 0.75rem;
+    }
+
+    .hero-install code,
+    .footer-install code {
+      font-size: 0.85rem;
+    }
+  }
+</style>
