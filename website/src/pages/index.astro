@@ -124,9 +124,9 @@ sinks:
             <div class="code-bar"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">terminal</span></div>
             <pre><code>$ curl -X POST http://localhost:8080/webhook \
     -H "Content-Type: application/json" \
-    -d '{"event": "signup", "user_id": "abc123"}'
+    -d '{'"event": "signup", "user_id": "abc123"'}'
 
-{"status":"ok","events_received":1}</code></pre>
+{'{"status":"ok","events_received":1}'}</code></pre>
           </div>
         </div>
 
@@ -141,7 +141,7 @@ sinks:
 
        id       | protocol |              payload
 ----------------+----------+-----------------------------------
- ev_1a2b3c4d   | webhook  | {"event":"signup","user_id":"abc123"}
+ ev_1a2b3c4d   | webhook  | {'{"event":"signup","user_id":"abc123"}'}
 (1 row)</code></pre>
           </div>
         </div>
@@ -316,7 +316,7 @@ sinks:
   .hero-bg {
     position: absolute;
     inset: 0;
-    background-image: url('/images/hero-bg.png');
+    background-image: url('/images/hero-bg.webp');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
