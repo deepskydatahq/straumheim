@@ -124,9 +124,9 @@ sinks:
             <div class="code-bar"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">terminal</span></div>
             <pre><code>$ curl -X POST http://localhost:8080/webhook \
     -H "Content-Type: application/json" \
-    -d '{'"event": "signup", "user_id": "abc123"'}'
+    -d '&lbrace;"event": "signup", "user_id": "abc123"&rbrace;'
 
-{'{"status":"ok","events_received":1}'}</code></pre>
+&lbrace;"status":"ok","events_received":1&rbrace;</code></pre>
           </div>
         </div>
 
@@ -141,7 +141,7 @@ sinks:
 
        id       | protocol |              payload
 ----------------+----------+-----------------------------------
- ev_1a2b3c4d   | webhook  | {'{"event":"signup","user_id":"abc123"}'}
+ ev_1a2b3c4d   | webhook  | &lbrace;"event":"signup","user_id":"abc123"&rbrace;
 (1 row)</code></pre>
           </div>
         </div>
