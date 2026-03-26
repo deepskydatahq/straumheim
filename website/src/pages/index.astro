@@ -8,7 +8,7 @@
   <meta name="description" content="Self-hosted event collection pipeline. Single Go binary, zero dependencies, warehouse delivery to Postgres, ClickHouse, and JSONL. Your data, your infrastructure." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Marcellus&family=Macondo+Swash+Caps&family=Macondo&display=swap" rel="stylesheet" />
 </head>
 <body>
   <!-- Navigation -->
@@ -152,7 +152,7 @@ sinks:
   <!-- Comparison Table -->
   <section class="comparison">
     <div class="container">
-      <h2 class="section-title">How Straumheim compares</h2>
+      <h2 class="section-title">How <span class="brand">Straumheim</span> compares</h2>
       <div class="table-wrapper">
         <table class="comparison-table">
           <thead>
@@ -160,7 +160,7 @@ sinks:
               <th></th>
               <th>Segment</th>
               <th>Snowplow OSS</th>
-              <th class="highlight-col">Straumheim</th>
+              <th class="highlight-col"><span class="brand">Straumheim</span></th>
             </tr>
           </thead>
           <tbody>
@@ -211,7 +211,7 @@ sinks:
     <div class="container">
       <div class="footer-cta">
         <h2>Ready to own your event data?</h2>
-        <p>Get started with Straumheim in minutes. Pull the Docker image, add a config file, and start collecting.</p>
+        <p>Get started with <span class="brand">Straumheim</span> in minutes. Pull the Docker image, add a config file, and start collecting.</p>
         <div class="footer-install">
           <code>docker pull ghcr.io/deepskydatahq/straumheim:latest</code>
         </div>
@@ -221,7 +221,7 @@ sinks:
         </div>
       </div>
       <div class="footer-bottom">
-        <p>Straumheim is open source under the MIT License. Part of the -heim family alongside <a href="https://fyrnheim.dev">Fyrnheim</a>.</p>
+        <p><span class="brand">Straumheim</span> is open source under the MIT License. Part of the -heim family alongside <a href="https://fyrnheim.dev">Fyrnheim</a>.</p>
       </div>
     </div>
   </footer>
@@ -241,6 +241,10 @@ sinks:
 
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3, h4, .nav-logo, .btn, .step-number {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
     background: #0a0a0a;
     color: #f5f5f5;
     line-height: 1.6;
@@ -277,12 +281,17 @@ sinks:
     align-items: center;
   }
 
+  .brand, .nav-logo {
+    font-family: 'Macondo', serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
   .nav-logo {
     font-size: 1.5rem;
     font-weight: 700;
     color: #0ea5e9;
     text-decoration: none;
-    letter-spacing: -0.02em;
   }
 
   .nav-links {
