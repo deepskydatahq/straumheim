@@ -1,0 +1,138 @@
+# Mission: Zero-Ops Hosting Evaluation
+# Select and prove a managed hosting setup that replaces the maintenance risk of a Hetzner VM
+
+id = "M008"
+title = "Select and prove zero-ops managed hosting for Straumheim"
+status = "ready"
+created = 2026-08-20
+
+[outcome]
+description = """
+Straumheim has an evidence-backed hosting decision and a working proof deployment
+on the best-fitting managed container platform. The selected setup performs routine
+infrastructure maintenance, TLS, deployment health checks, restarts, logging, and
+failure notifications without SSH access or recurring manual checks. The decision
+also makes explicit which event-delivery risks are application concerns that a
+managed host cannot solve.
+"""
+
+user_progress = "From 'an unmonitored Hetzner VM that depends on manual maintenance' to 'a proven managed deployment with automatic recovery, observable failures, and a documented production migration path'"
+
+[execution]
+mode = "implementation"
+
+[scope]
+in_scope = [
+    "Define measurable zero-ops requirements: no OS patching, no routine SSH, managed TLS, automatic health evaluation and restart, deployment rollback, centralized logs, and actionable failure notifications",
+    "Evaluate Google Cloud Run, Render, and Railway using current official documentation, pricing, and a weighted decision matrix",
+    "Consider DigitalOcean App Platform only if Cloud Run, Render, and Railway cannot satisfy a mandatory requirement",
+    "Evaluate EU region availability, data-processing implications, outbound connectivity, static egress needs, custom domains, secrets, config delivery, and GHCR/GitHub deployment support",
+    "Estimate monthly hosting cost for an always-available low-volume collector, targeting EUR 20/month or less excluding destination databases",
+    "Map Straumheim runtime characteristics to each platform: long-running background flushes, in-memory buffering, ephemeral filesystems, graceful shutdown, startup/liveness checks, and external sink connections",
+    "Deploy a disposable proof environment on the highest-scoring platform in an EU region",
+    "Send synthetic events through the proof deployment and verify delivery to a non-production destination",
+    "Exercise deployment and failure behavior: unhealthy revision, process restart, rollback, sink outage visibility, logs, and notification delivery",
+    "Document the selected platform, rejected alternatives, evidence, costs, risks, configuration, and a production migration plan",
+    "Identify prerequisite follow-up missions or stories for reliability gaps that hosting cannot solve, especially durable buffering, retries, readiness, and sink health",
+]
+out_of_scope = [
+    "Production DNS cutover or moving live collector traffic",
+    "Decommissioning the Hetzner VM",
+    "Provisioning or migrating a production Postgres or ClickHouse destination",
+    "Implementing durable buffering, delivery retries, dead-letter handling, or horizontal scaling",
+    "Building a custom hosting control plane or managed Straumheim service",
+    "Operating Kubernetes, a self-managed VM, Coolify, or another platform that retains host patching and monitoring responsibility",
+    "Selecting DigitalOcean App Platform when another candidate satisfies all mandatory requirements",
+]
+
+[testing]
+approach = "research-and-proof"
+criteria = [
+    "A written requirements checklist distinguishes automated platform responsibilities from Straumheim application responsibilities",
+    "Cloud Run, Render, and Railway are scored against the same weighted criteria with links to current official evidence and transparent disqualifiers",
+    "DigitalOcean is excluded unless all preferred candidates fail at least one mandatory requirement, in which case the reason for evaluating it is documented",
+    "The recommendation includes a realistic monthly cost estimate for an EU, always-available low-volume deployment and states all excluded costs",
+    "The proof deployment uses an immutable Straumheim image, managed secrets, platform TLS, and platform health checks without a manually maintained reverse proxy or VM",
+    "A synthetic event reaches the configured non-production sink through the public HTTPS collector endpoint",
+    "An unhealthy deployment is prevented from replacing the healthy deployment or is rolled back through a documented platform mechanism",
+    "A stopped or unhealthy instance is automatically replaced or restarted without SSH intervention",
+    "Logs are centrally accessible and a tested notification reaches the operator for a defined collector or delivery failure",
+    "The selected setup requires no recurring manual uptime check; the runbook defines only alert-driven operator actions",
+    "The proof records observed restart and graceful-shutdown behavior, including the event-loss implications of the current in-memory buffer",
+    "The decision explicitly addresses Cloud Run background CPU/billing behavior if Cloud Run remains a candidate",
+    "A production migration plan covers configuration, secrets, DNS, validation, rollback, and eventual Hetzner decommissioning without performing the cutover",
+    "Unresolved reliability gaps are represented as proposed follow-up product missions or stories rather than being hidden by the hosting recommendation",
+]
+
+validator_context = [
+    "docs/hosting/",
+    "Dockerfile",
+    ".github/workflows/release.yml",
+    "docker-compose.prod.yaml",
+    "deploy/Caddyfile",
+    "cmd/straumheim/main.go",
+    "internal/buffer/memory.go",
+    "internal/pipeline/engine.go",
+    "internal/metrics/metrics.go",
+]
+
+[context]
+relevant_paths = [
+    "Dockerfile",
+    ".github/workflows/",
+    "docker-compose.prod.yaml",
+    "deploy/Caddyfile",
+    "config.prod.example.yaml",
+    "cmd/straumheim/main.go",
+    "internal/buffer/",
+    "internal/pipeline/",
+    "internal/metrics/",
+    "product/missions/M006-production-ready.toml",
+]
+dependencies = [
+    "A published GHCR image that the proof platform can pull",
+    "A disposable non-production sink and credentials for end-to-end verification",
+    "Access to create a test service and notification integration on the selected platform",
+]
+
+[notes]
+considerations = """
+Decision priority:
+1. No host or orchestrator maintenance by the operator.
+2. Automatic detection and recovery, with notifications instead of manual checks.
+3. Low operational complexity and predictable cost.
+4. EU availability and straightforward data handling.
+5. Portability and ownership consistent with Straumheim's self-hosted vision.
+
+Preferred shortlist: Google Cloud Run, Render, and Railway. DigitalOcean App
+Platform is a fallback only, per product-owner preference. A plain VM and Coolify
+are not zero-ops because the operator still owns host patching, backups, upgrades,
+and monitoring.
+
+Repository constraints discovered during planning:
+- Straumheim already ships a scratch-based container and multi-architecture GHCR
+  images, which suits managed container platforms.
+- `/health` currently reports process availability only; it does not verify buffer
+  or sink health.
+- The active buffer is in memory. Platform restarts and deploys can lose queued
+  records even when infrastructure recovery works perfectly.
+- Sink write failures are logged and counted but are not retried. Hosting cannot
+  provide delivery guarantees on behalf of the application.
+- The buffer flush runs in a background goroutine. Cloud Run must therefore be
+  evaluated with instance-based billing/background CPU behavior rather than
+  assuming request-based execution is safe.
+- The file sink depends on local storage, while managed/serverless container filesystems
+  are generally ephemeral. The proof should use an external destination.
+
+Initial official research starting points (revalidate during execution):
+- Cloud Run health checks, autoscaling, minimum instances, billing settings, and
+  container runtime contract: https://cloud.google.com/run/docs
+- Render health checks, infrastructure as code, and managed service behavior:
+  https://render.com/docs
+- Railway health checks, restart policy, deployment teardown, and config as code:
+  https://docs.railway.com
+
+Expected artifacts should live under `docs/hosting/` and include a requirements
+checklist, scored comparison, proof results, final decision, and migration runbook.
+The mission should end with a platform decision, not an indefinite comparison.
+"""
