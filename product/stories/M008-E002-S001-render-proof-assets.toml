@@ -1,0 +1,41 @@
+id = "M008-E002-S001"
+parent = "M008-E002"
+title = "Create Render proof deployment assets"
+status = "complete"
+triage = "plan"
+created = 2026-08-20
+
+[outcome]
+description = "Provide a validated Render Blueprint and proof procedure for an EU Starter web service with managed health checks, graceful shutdown, configuration, and centralized debug delivery."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "configuration"
+description = "render.yaml defines a Frankfurt Docker web service on Starter with /health checks and a bounded graceful shutdown"
+
+[[acceptance_criteria.criteria]]
+test = "security"
+description = "No credential value is committed and runtime config is supplied through Render secret-file handling"
+
+[[acceptance_criteria.criteria]]
+test = "document"
+description = "docs/hosting/proof-plan.md gives reproducible setup, synthetic event, failed deploy, restart, rollback, log, notification, cleanup, and evidence-capture steps"
+
+[[acceptance_criteria.criteria]]
+test = "validation"
+description = "render.yaml parses and validates against the published Render Blueprint schema"
+
+[context]
+relevant_paths = ["render.yaml", "docs/hosting/proof-plan.md", "Dockerfile", "config.prod.example.yaml"]
+input_fixtures = []
+depends_on = ["M008-E001-S002"]
+
+[handoff]
+implementation_hints = "Use runtime docker from this repository for CI-gated automatic deploys. Set STRAUMHEIM_CONFIG to /etc/secrets/config.yaml and document a stdout-only proof config."
+reference_files = ["docs/hosting/decision.md"]
+
+[execution]
+completed = 2026-08-20
+evidence = "render.yaml validates against https://render.com/schema/render.yaml.json; the Docker image builds with a 1.055 MB context; local container /health and webhook-to-stdout proof passed using deploy/render/config.proof.example.yaml; docs/hosting/proof-plan.md defines the live drills."

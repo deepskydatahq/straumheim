@@ -1,0 +1,37 @@
+id = "M008-E003-S002"
+parent = "M008-E003"
+title = "Create application reliability follow-up missions"
+status = "complete"
+triage = "plan"
+created = 2026-08-20
+
+[outcome]
+description = "Create draft product missions for durable delivery and meaningful readiness/alerting so hosting automation is not mistaken for data reliability."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "product"
+description = "A draft mission defines durable buffering, sink retry/backpressure, and dead-letter behavior without external queue infrastructure"
+
+[[acceptance_criteria.criteria]]
+test = "product"
+description = "A draft mission defines readiness, sink health, delivery-failure alerting, and operator-visible health semantics"
+
+[[acceptance_criteria.criteria]]
+test = "traceability"
+description = "Both follow-ups cite M008 findings and separate platform recovery from event-delivery guarantees"
+
+[context]
+relevant_paths = ["product/missions/M009-durable-delivery.toml", "product/missions/M010-operational-health.toml", "internal/buffer/", "internal/pipeline/", "internal/metrics/", "cmd/straumheim/main.go"]
+input_fixtures = []
+depends_on = ["M008-E001-S001"]
+
+[handoff]
+implementation_hints = "Keep follow-ups draft and scoped; do not implement them during M008."
+reference_files = ["VALUES.md", "docs/hosting/requirements.md"]
+
+[execution]
+completed = 2026-08-20
+evidence = "Draft missions M009 and M010 capture durable delivery and operational health separately, both traced to M008 findings and kept out of M008 implementation scope."

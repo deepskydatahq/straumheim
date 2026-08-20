@@ -1,0 +1,31 @@
+id = "M008-E001"
+parent = "M008"
+title = "Zero-ops requirements and platform decision"
+status = "complete"
+created = 2026-08-20
+depends_on = []
+
+[outcome]
+description = """A documented, evidence-backed decision compares Cloud Run, Render, and Railway against Straumheim's runtime and zero-ops requirements, recommends one platform, and transparently records cost and disqualifiers."""
+
+[job_story]
+description = """When replacing the Hetzner VM, I want a decision based on operational evidence and application constraints, so that convenience does not hide reliability or maintenance risks."""
+
+[testing]
+approach = "research-and-review"
+criteria = [
+    "Mandatory zero-ops requirements and ownership boundaries are documented",
+    "All preferred candidates use one weighted scoring model and current official sources",
+    "The decision covers EU regions, cost, health, recovery, deploys, alerts, secrets, networking, and runtime fit",
+    "DigitalOcean is not evaluated unless every preferred candidate fails a mandatory requirement",
+]
+validator_context = ["docs/hosting/requirements.md", "docs/hosting/platform-comparison.md", "docs/hosting/decision.md"]
+
+[context]
+relevant_paths = ["product/missions/M008-zero-ops-hosting.toml", "Dockerfile", "cmd/straumheim/main.go", "internal/buffer/", "internal/pipeline/", "internal/metrics/"]
+dependencies = []
+
+[notes]
+considerations = """Use official platform documentation and date-sensitive pricing. Separate infrastructure self-healing from event-delivery guarantees."""
+
+estimated_stories = 2

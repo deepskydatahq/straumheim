@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: straumheim-proof
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    autoDeployTrigger: checksPass
+    healthCheckPath: /health
+    maxShutdownDelaySeconds: 30
+    numInstances: 1
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: -config /etc/secrets/config.yaml
+    envVars:
+      - key: PORT
+        value: "8080"

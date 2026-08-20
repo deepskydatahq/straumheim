@@ -1,0 +1,28 @@
+# Upload this file as the Render secret file `config.yaml` for the disposable proof.
+# It contains no credentials. Render captures stdout outside the ephemeral instance.
+server:
+  host: 0.0.0.0
+  port: 8080
+  cors:
+    allowed_origins:
+      - "*"
+
+inputs:
+  webhook:
+    enabled: true
+    path: /webhook
+  snowplow:
+    enabled: false
+  pixel:
+    enabled: false
+
+buffer:
+  type: memory
+  capacity: 100
+  flush_interval: 1s
+  flush_count: 1
+
+sinks:
+  - name: proof-log
+    type: stdout
+    mode: stream

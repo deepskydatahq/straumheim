@@ -1,0 +1,30 @@
+id = "M008-E003"
+parent = "M008"
+title = "Migration runbook and reliability follow-ups"
+status = "complete"
+created = 2026-08-20
+depends_on = ["M008-E001"]
+
+[outcome]
+description = """A production migration runbook defines secrets, deployment, DNS cutover, validation, rollback, alerts, and Hetzner retirement, while draft follow-up missions capture delivery and health gaps the hosting platform cannot solve."""
+
+[job_story]
+description = """When the proof succeeds, I want a safe cutover procedure and an honest reliability backlog, so that production migration is controlled and infrastructure automation is not mistaken for delivery durability."""
+
+[testing]
+approach = "document-review"
+criteria = [
+    "Migration plan includes prerequisites, config, secrets, deploy, validation, DNS, rollback, and decommissioning",
+    "Operations are alert-driven and require no routine uptime checks",
+    "Durable delivery and application health gaps are captured in product TOML follow-ups",
+]
+validator_context = ["docs/hosting/migration-runbook.md", "product/missions/M009-*.toml", "product/missions/M010-*.toml"]
+
+[context]
+relevant_paths = ["docs/hosting/", "product/missions/M008-zero-ops-hosting.toml", "internal/buffer/", "internal/pipeline/", "cmd/straumheim/main.go"]
+dependencies = []
+
+[notes]
+considerations = """The runbook may be complete before live proof, but must label proof-dependent gates and must not authorize production cutover by itself."""
+
+estimated_stories = 2

@@ -1,0 +1,38 @@
+id = "M008-E002-S002"
+parent = "M008-E002"
+title = "Run live Render collection proof"
+status = "blocked"
+triage = "ready"
+created = 2026-08-20
+
+[outcome]
+description = "Deploy the disposable Render service and record HTTPS health, synthetic event delivery, centralized logs, and immutable deployment evidence."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "live"
+description = "A Frankfurt Render service becomes healthy over platform-managed HTTPS without a reverse proxy or VM"
+
+[[acceptance_criteria.criteria]]
+test = "live"
+description = "POST /webhook returns an event ID and the same event appears in platform-persisted service logs through the debug sink"
+
+[[acceptance_criteria.criteria]]
+test = "evidence"
+description = "docs/hosting/proof-results.md records timestamps, deployment identity, URL with secrets removed, commands, and observed results"
+
+[context]
+relevant_paths = ["render.yaml", "docs/hosting/proof-plan.md", "docs/hosting/proof-results.md"]
+input_fixtures = []
+depends_on = ["M008-E002-S001"]
+
+[handoff]
+implementation_hints = "Requires a Render account/workspace. Never commit service credentials or notification webhook URLs."
+reference_files = ["docs/hosting/proof-plan.md"]
+
+[execution]
+blocked = 2026-08-20
+failure_reason = "No authenticated Render workspace, API token/CLI session, disposable Starter billing access, or notification destination is available. Live deployment evidence cannot be produced without external access."
+evidence = "docs/hosting/proof-results.md records the access checks without claiming a deployment."

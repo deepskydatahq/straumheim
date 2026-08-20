@@ -1,0 +1,42 @@
+id = "M008-E002-S003"
+parent = "M008-E002"
+title = "Exercise Render recovery, rollback, and notifications"
+status = "blocked"
+triage = "plan"
+created = 2026-08-20
+
+[outcome]
+description = "Observe health-gated deploy failure, automatic restart, rollback, graceful shutdown, and operator notification in the disposable Render environment."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "live"
+description = "An unhealthy candidate deployment does not replace the healthy deployment and produces a notification"
+
+[[acceptance_criteria.criteria]]
+test = "live"
+description = "A running instance health failure causes traffic removal and automatic restart without SSH"
+
+[[acceptance_criteria.criteria]]
+test = "live"
+description = "A previous healthy deploy can be restored and its synthetic event path works"
+
+[[acceptance_criteria.criteria]]
+test = "evidence"
+description = "Proof results record timing, notifications, SIGTERM behavior, and the resulting in-memory event-loss window"
+
+[context]
+relevant_paths = ["docs/hosting/proof-plan.md", "docs/hosting/proof-results.md", "cmd/straumheim/main.go", "internal/buffer/memory.go"]
+input_fixtures = []
+depends_on = ["M008-E002-S002"]
+
+[handoff]
+implementation_hints = "Use a disposable branch/revision or temporary health endpoint failure. Restore all settings and destroy proof resources after evidence capture."
+reference_files = ["docs/hosting/proof-plan.md"]
+
+[execution]
+blocked = 2026-08-20
+failure_reason = "Depends on blocked live deployment M008-E002-S002 and requires a Render service plus email/Slack notification access."
+evidence = "docs/hosting/proof-plan.md defines each drill and docs/hosting/proof-results.md records that none were executed."

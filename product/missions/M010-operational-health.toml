@@ -1,0 +1,64 @@
+# Draft follow-up from M008: process liveness currently hides sink and delivery failure
+
+id = "M010"
+title = "Actionable readiness, delivery health, and zero-check alerting"
+status = "draft"
+created = 2026-08-20
+
+[outcome]
+description = """
+Operators and managed platforms can distinguish process liveness from readiness and
+delivery health. Destination failures, stalled queues, and sustained delivery errors
+produce actionable metrics/logs and a documented alert policy, so routine manual
+checks are unnecessary and liveness recovery does not create restart loops.
+"""
+
+user_progress = "From 'health always says OK while sinks may fail' to 'platform recovery and operator alerts reflect the right failure semantics'"
+
+[execution]
+mode = "implementation"
+
+[scope]
+in_scope = [
+    "Define stable liveness and readiness semantics while preserving /health compatibility",
+    "Expose a liveness endpoint suitable for managed-platform restart probes",
+    "Expose readiness/delivery state without forcing restart during an external sink outage",
+    "Track sink initialization, last success, last failure, consecutive failures, and queue pressure",
+    "Wire the existing buffer-size metric to real state",
+    "Define Prometheus alert rules or equivalent documented thresholds for no delivery, failures, backlog, and saturation",
+    "Emit structured state-transition logs that support hosted log alerts",
+    "Document an alert-driven runbook with no routine manual uptime checks",
+    "Test healthy, degraded, failed-sink, recovery, and deadlock-relevant behavior",
+]
+out_of_scope = [
+    "Durable buffering and retry implementation (M009)",
+    "A hosted monitoring dashboard product",
+    "Provider-specific production cutover",
+    "Restarting the collector merely because a destination is temporarily unavailable",
+]
+
+[testing]
+approach = "unit-and-integration-test"
+criteria = [
+    "The platform liveness endpoint remains healthy during a recoverable destination outage",
+    "Readiness or delivery health reports degradation with machine-readable reasons",
+    "Sink failure and recovery update metrics and structured logs",
+    "Buffer depth reflects actual queued records",
+    "Alert guidance identifies failed delivery without relying on a human checking dashboards",
+    "Health endpoint tests cover healthy, degraded, and recovered states",
+    "go test ./... and go build ./... pass",
+]
+validator_context = ["cmd/straumheim/main.go", "internal/pipeline/", "internal/metrics/", "internal/buffer/", "docs/operations/"]
+
+[context]
+relevant_paths = ["cmd/straumheim/main.go", "internal/pipeline/engine.go", "internal/metrics/metrics.go", "internal/buffer/", "docs/hosting/requirements.md", "docs/hosting/migration-runbook.md"]
+dependencies = []
+
+[notes]
+considerations = """
+M008 found that `/health` always returns OK and Render would use it both to gate
+deploys and restart a wedged process. Destination failure should page an operator
+and affect delivery readiness, but should not trigger a restart loop that discards
+memory. Coordinate detailed semantics with M009 once durable queues exist. This
+mission remains draft pending product sequencing.
+"""

@@ -1,0 +1,41 @@
+id = "M008-E001-S002"
+parent = "M008-E001"
+title = "Compare preferred platforms and select a winner"
+status = "complete"
+triage = "brainstorm"
+created = 2026-08-20
+
+[outcome]
+description = "Score Cloud Run, Render, and Railway from official evidence and publish a decisive recommendation with cost and rejected alternatives."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "document"
+description = "docs/hosting/platform-comparison.md applies one weighted matrix to Cloud Run, Render, and Railway"
+
+[[acceptance_criteria.criteria]]
+test = "evidence"
+description = "Every material platform claim links to current official documentation and time-sensitive facts are dated"
+
+[[acceptance_criteria.criteria]]
+test = "calculation"
+description = "Cost estimates state assumptions and excluded database, egress, domain, and notification costs"
+
+[[acceptance_criteria.criteria]]
+test = "decision"
+description = "docs/hosting/decision.md selects one platform, explains disqualifiers, and records why DigitalOcean was not needed or why it became necessary"
+
+[context]
+relevant_paths = ["docs/hosting/requirements.md", "docs/hosting/platform-comparison.md", "docs/hosting/decision.md"]
+input_fixtures = []
+depends_on = ["M008-E001-S001"]
+
+[handoff]
+implementation_hints = "Treat mandatory failures as disqualifiers before weighted score. Explicitly calculate Cloud Run instance-based cost for background goroutines."
+reference_files = ["product/missions/M008-zero-ops-hosting.toml"]
+
+[execution]
+completed = 2026-08-20
+evidence = "docs/hosting/platform-comparison.md scores the three preferred platforms from official sources; docs/hosting/decision.md selects Render Starter Frankfurt and records gates and rejected options."

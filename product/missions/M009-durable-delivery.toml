@@ -1,0 +1,64 @@
+# Draft follow-up from M008: managed hosting cannot protect process memory or retry sink failures
+
+id = "M009"
+title = "Durable accepted-event delivery without external queue infrastructure"
+status = "draft"
+created = 2026-08-20
+
+[outcome]
+description = """
+Straumheim acknowledges an event only after durable local acceptance, recovers queued
+records after restart, retries transient sink failures with bounded backoff, and
+preserves permanently failed deliveries for operator action. The default remains a
+single binary without Kafka or Redis.
+"""
+
+user_progress = "From 'managed restarts can lose acknowledged in-memory events' to 'accepted events survive restarts and destination outages'"
+
+[execution]
+mode = "implementation"
+
+[scope]
+in_scope = [
+    "Define accepted-event and per-sink delivery guarantees",
+    "Implement an embedded durable buffer, evaluating SQLite WAL as the default",
+    "Recover undelivered records after process or platform restart",
+    "Retry transient sink failures with bounded exponential backoff and jitter",
+    "Apply backpressure when durable capacity is exhausted",
+    "Preserve terminal failures in a dead-letter representation with reason and sink",
+    "Make shutdown safe within managed-platform termination windows",
+    "Expose queue depth, retry, age, dead-letter, and delivery metrics",
+    "Test crash/restart and sink-outage recovery",
+]
+out_of_scope = [
+    "Kafka, Redis, NATS, or another required external queue",
+    "Horizontal multi-instance coordination",
+    "Exactly-once delivery across every sink",
+    "Hosting migration or DNS cutover",
+]
+
+[testing]
+approach = "integration-test"
+criteria = [
+    "An acknowledged event is recovered and delivered after forced process termination",
+    "A transient sink outage queues records and delivers them after recovery without manual replay",
+    "Retry backoff is bounded and does not busy-loop",
+    "Buffer exhaustion returns explicit backpressure instead of silent loss",
+    "Permanent failures remain inspectable with sink and reason",
+    "Existing memory buffer remains available for explicitly best-effort deployments",
+    "go test ./... and go build ./... pass",
+]
+validator_context = ["internal/buffer/", "internal/pipeline/", "internal/sink/", "internal/metrics/", "cmd/straumheim/main.go"]
+
+[context]
+relevant_paths = ["internal/buffer/", "internal/pipeline/engine.go", "internal/sink/sink.go", "internal/metrics/metrics.go", "cmd/straumheim/main.go", "docs/hosting/requirements.md"]
+dependencies = []
+
+[notes]
+considerations = """
+M008 found that the current channel buffer loses data on crash and the engine logs
+sink errors without retrying. A managed host can restart the process but cannot
+recover its memory. Preserve the single-binary product promise; compare SQLite WAL
+and other embedded designs during breakdown before fixing the storage contract.
+This mission is draft because lower unshipped value-ladder work may take priority.
+"""

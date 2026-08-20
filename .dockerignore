@@ -1,0 +1,10 @@
+.git
+.claude
+.pi
+.beads
+.env
+.env.*
+bin
+straumheim
+website/node_modules
+website/dist

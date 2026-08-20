@@ -1,0 +1,37 @@
+id = "M008-E001-S001"
+parent = "M008-E001"
+title = "Define zero-ops requirements and audit Straumheim runtime"
+status = "complete"
+triage = "plan"
+created = 2026-08-20
+
+[outcome]
+description = "Document mandatory hosting automation, operator ownership boundaries, and the runtime constraints that affect safe managed deployment."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "document"
+description = "docs/hosting/requirements.md defines mandatory, weighted, and informational platform criteria"
+
+[[acceptance_criteria.criteria]]
+test = "document"
+description = "The document assigns infrastructure, platform, and application responsibilities without gaps"
+
+[[acceptance_criteria.criteria]]
+test = "inspection"
+description = "The audit cites actual code for background flushes, in-memory loss, sink failure handling, health behavior, shutdown, port, and filesystem constraints"
+
+[context]
+relevant_paths = ["docs/hosting/requirements.md", "cmd/straumheim/main.go", "internal/buffer/memory.go", "internal/pipeline/engine.go", "internal/metrics/metrics.go", "Dockerfile"]
+input_fixtures = []
+depends_on = []
+
+[handoff]
+implementation_hints = "Define zero-ops as no host patching or routine uptime checks; do not claim a platform fixes delivery semantics."
+reference_files = ["product/missions/M008-zero-ops-hosting.toml", "VISION.md", "VALUES.md"]
+
+[execution]
+completed = 2026-08-20
+evidence = "docs/hosting/requirements.md defines ten mandatory gates, a weighted model, ownership boundaries, proof rules, and a code-cited runtime audit."

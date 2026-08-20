@@ -1,0 +1,35 @@
+id = "M008-E002"
+parent = "M008"
+title = "Managed hosting proof and failure drills"
+status = "blocked"
+created = 2026-08-20
+depends_on = ["M008-E001"]
+
+[outcome]
+description = """The selected platform has a reproducible disposable deployment definition and recorded proof of HTTPS collection, sink delivery, health-gated deployment, restart behavior, rollback, centralized logs, and notifications."""
+
+[job_story]
+description = """When trusting a managed host with collector traffic, I want its automation exercised in a disposable environment, so that the recommendation is based on observed behavior rather than marketing claims."""
+
+[testing]
+approach = "live-proof"
+criteria = [
+    "Deployment assets pin configuration and health behavior without a VM or reverse proxy",
+    "A synthetic event reaches a non-production sink over the public HTTPS endpoint",
+    "Failed deployment, restart, rollback, logs, and notification behavior are recorded from a live proof",
+    "Proof limitations and event-loss windows are explicit",
+]
+validator_context = ["render.yaml", "docs/hosting/proof-plan.md", "docs/hosting/proof-results.md"]
+
+[context]
+relevant_paths = ["Dockerfile", ".github/workflows/release.yml", "config.prod.example.yaml", "cmd/straumheim/main.go"]
+dependencies = ["Access to selected platform", "A disposable sink or platform-persisted debug destination", "A notification destination"]
+
+[notes]
+considerations = """Do not use production traffic or perform DNS cutover. Block live stories with exact missing access rather than fabricating results."""
+
+estimated_stories = 3
+
+[execution]
+blocked = 2026-08-20
+failure_reason = "Proof assets are complete, but live Render workspace, billing, logs, and notification access are unavailable; stories S002 and S003 remain blocked."

@@ -1,0 +1,41 @@
+id = "M008-E003-S001"
+parent = "M008-E003"
+title = "Write the production migration runbook"
+status = "complete"
+triage = "plan"
+created = 2026-08-20
+
+[outcome]
+description = "Document a reversible, alert-driven migration from Hetzner to the selected managed platform without performing production cutover."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "document"
+description = "docs/hosting/migration-runbook.md covers prerequisites, immutable deploy, config, secrets, DNS, validation, rollback, and Hetzner decommissioning"
+
+[[acceptance_criteria.criteria]]
+test = "safety"
+description = "The runbook has explicit stop/go gates, TTL preparation, dual validation, rollback triggers, and delayed VM retirement"
+
+[[acceptance_criteria.criteria]]
+test = "operations"
+description = "Routine operation is alert-driven with owners and responses for deploy failure, unhealthy service, delivery errors, and cost"
+
+[[acceptance_criteria.criteria]]
+test = "scope"
+description = "Proof-dependent steps are marked and the runbook does not claim authorization for production cutover"
+
+[context]
+relevant_paths = ["docs/hosting/migration-runbook.md", "docs/hosting/decision.md", "docs/hosting/proof-results.md", "docker-compose.prod.yaml"]
+input_fixtures = []
+depends_on = ["M008-E001-S002"]
+
+[handoff]
+implementation_hints = "Use Render's generated domain for validation before DNS. Keep Hetzner intact through an observation window."
+reference_files = ["product/missions/M008-zero-ops-hosting.toml"]
+
+[execution]
+completed = 2026-08-20
+evidence = "docs/hosting/migration-runbook.md defines ownership, hard gates, Render setup, canary validation, DNS cutover, explicit rollback triggers, observation, Hetzner retirement, and alert-driven operations."
