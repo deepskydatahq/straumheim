@@ -38,5 +38,5 @@ reference_files = ["product/missions/M011-bigquery-destination.toml"]
 
 [execution]
 blocked = 2026-08-21
-failure_reason = "A local end-to-end GCP integration passed, but Render rejected the two-instance Starter create request with HTTP 402 because the workspace has no payment information. The public HTTPS/two-instance proof and final resource cleanup remain blocked."
-evidence = "docs/destinations/bigquery-proof.md records twelve matching BigQuery rows, JSON mapping, table metadata, an actionable wrong-location failure, the Render 402 response, active proof resources, and the remaining non-secret procedure."
+failure_reason = "Public one-instance Render Free delivery passed, but Render rejected the required two-instance Starter create request with HTTP 402 because the workspace has no payment information. Healthy-peer evidence and final BigQuery/key cleanup remain blocked."
+evidence = "docs/destinations/bigquery-proof.md records twelve matching public HTTPS/BigQuery rows, JSON and batch behavior, controlled at-least-once duplicates, clean shutdown after the EOF fix, deleted Render resources, the Starter 402 response, and remaining active GCP proof resources."

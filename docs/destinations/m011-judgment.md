@@ -2,7 +2,7 @@
 
 Judgment date: 2026-08-21
 
-Result: **blocked — 11 criteria pass, 3 require live external evidence**
+Result: **blocked — 13 testing criteria pass, cleanup remains; the two-instance mission outcome also requires Render billing**
 
 | # | Mission criterion | Result | Evidence |
 |---:|---|---|---|
@@ -16,9 +16,9 @@ Result: **blocked — 11 criteria pass, 3 require live external evidence**
 | 8 | No credentials committed/logged | Pass | Config/examples contain only ADC path and destination placeholders; secret-pattern scan clean |
 | 9 | Tests require no live GCP project | Pass | Metadata/writer factories and fakes cover sink behavior |
 | 10 | Go quality gates | Pass | gofmt, `go test ./...`, `go test -race ./...`, `go build ./...`, and `go vet ./...`; Docker scratch build passes |
-| 11 | HTTPS event matches BigQuery row | **Blocked** | Local HTTP-to-BigQuery match passed for 12 rows; Render create returned HTTP 402 |
-| 12 | Live batch and duplicate semantics | **Blocked** | Local live batch passed with 12 rows; controlled duplicate/query evidence remains |
-| 13 | Proof resources removed | **Blocked** | BigQuery `events` and the proof service-account key remain active for resumed Render proof |
+| 11 | HTTPS event matches BigQuery row | Pass | Twelve public Render Free HTTPS IDs matched twelve BigQuery rows and JSON values |
+| 12 | Live batch and duplicate semantics | Pass | Twelve-event public batch passed; a controlled ID produced two raw rows, bounded by documented ID deduplication |
+| 13 | Proof resources removed | **Blocked** | Free Render service/secrets are deleted; BigQuery `events` and proof key remain for the resumed two-instance proof |
 | 14 | Decision and Cloud Storage boundary documented | Pass | `docs/destinations/bigquery.md` selects direct default-stream delivery and reserves GCS for archive/replay |
 
 ## Implemented artifacts
@@ -37,5 +37,5 @@ Result: **blocked — 11 criteria pass, 3 require live external evidence**
 
 1. Add Render payment information for the two Starter instances.
 2. Re-run the already prepared service-create command with the supplied secret files.
-3. Capture public HTTPS/two-instance and controlled duplicate evidence.
+3. Capture two-instance healthy-peer evidence; public HTTPS, batch, JSON, duplicate, and shutdown behavior already pass on Free.
 4. Delete the Render service, BigQuery proof table/dataset as approved, service-account key/account, and local key; then repeat this judgment.

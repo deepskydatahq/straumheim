@@ -21,7 +21,7 @@ user_progress = "From 'Render can collect events but only proof them in logs' to
 [execution]
 mode = "implementation"
 blocked = 2026-08-21
-failure_reason = "Sink code, tests, configuration, local GCP integration, Render/ADC setup, decision, and proof runbook are complete. Public Render-to-BigQuery HTTPS/two-instance evidence, controlled duplicate evidence, and final cleanup are blocked because Render returned HTTP 402 until payment information is added."
+failure_reason = "Sink code, tests, configuration, public one-instance Render-to-BigQuery HTTPS delivery, batch/JSON/duplicate evidence, ADC setup, clean shutdown, decision, and proof runbook are complete. The required two-instance Starter evidence and final GCP cleanup are blocked because Render returned HTTP 402 until payment information is added."
 evidence = "See docs/destinations/bigquery-proof.md, docs/destinations/m011-judgment.md, and product/stories/M011-E003-S002-live-proof.toml."
 
 [scope]

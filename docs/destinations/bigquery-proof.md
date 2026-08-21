@@ -1,6 +1,6 @@
 # Render-to-BigQuery proof
 
-- **Status:** local GCP integration passed; Render deployment blocked by billing
+- **Status:** public Free-tier Render-to-BigQuery proof passed; two-Instance Starter proof blocked by billing
 - **Last access/proof check:** 2026-08-21
 - **Target:** two Render Starter instances in Frankfurt → EU BigQuery dataset
 
@@ -10,17 +10,17 @@
 |---|---|
 | Sink implementation and unit tests | Ready |
 | Render CLI authentication | Available |
-| Render Starter billing/payment | Blocked — prior workspace had no payment information; two paid instances cannot be created |
+| Render Starter billing/payment | Blocked — create returned HTTP 402; a one-instance Free proof was run and deleted instead |
 | GCP credentials | Available — user supplied a dataset-scoped service-account JSON; local mode was tightened to `0600` |
 | Approved GCP proof project | Available — user explicitly approved `propel-data-hub` and `straumheim_test` |
 | BigQuery CLI (`bq`) | Missing locally; proof used authenticated BigQuery REST metadata/table-data endpoints |
 | EU proof dataset/table | Available — existing EU dataset `straumheim_test`; sink created `events` |
 
-The Render create request returned HTTP 402 before creating a service. The BigQuery table and service-account key remain active for a resumed Render proof; they must be deleted after the final run.
+The two-instance Starter create request returned HTTP 402 before creating a service. A one-instance Free service was then created for partial public proof and deleted afterward. The BigQuery table and service-account key remain active for a resumed paid proof; they must be deleted after the final run.
 
 ## Observed local GCP integration
 
-A credentialed build from commit `6f0dcfa` ran locally against the production BigQuery APIs at 2026-08-21 09:44–09:46 UTC:
+A credentialed build from commit `6f0dcfa` ran locally against the production BigQuery APIs at 2026-08-21 07:44–07:46 UTC:
 
 - `BigQuerySink.Init` read dataset metadata, confirmed location `EU`, and created `propel-data-hub.straumheim_test.events`.
 - Table metadata reported DAY partitioning on `timestamp` and clustering by `protocol, source`.
@@ -30,7 +30,21 @@ A credentialed build from commit `6f0dcfa` ran locally against the production Bi
 - Starting with configured location `US` failed before serving traffic with: `dataset location "EU" does not match configured location "US"`.
 - The runtime service account needed no query-job role; metadata and row verification used its dataset-scoped permissions.
 
-This validates GCP authentication, table creation, stable metadata, batching through the running pipeline, JSON values, and actionable initialization errors. It does **not** substitute for the required public Render HTTPS/two-instance evidence.
+This validates GCP authentication, table creation, stable metadata, batching through the running pipeline, JSON values, and actionable initialization errors.
+
+## Observed public Render Free proof
+
+A one-instance Frankfurt Free service provided public-path evidence while preserving the two-instance billing blocker:
+
+- Service `srv-da405g0jo6nc73dd6gng`, deployment `dep-da405ggjo6nc73dd6hi0`, commit `ef80572`, URL `https://straumheim-m011-proof.onrender.com`.
+- Health returned HTTP 200; the first request after deployment took 8.140 seconds on Free.
+- Twelve HTTPS webhook requests returned HTTP 200 and IDs from `01a0234d-2a0b-7ab5-8a97-1529747fa6da` through `01a0234d-2d95-7247-bf18-2cc53e0adf82`.
+- BigQuery exposed all twelve matching IDs and proof tags `m011-render-free-20260821-00` through `-11`; nested payload and flattened values matched 0 through 11.
+- A controlled direct-sink append wrote ID `m011-controlled-duplicate-20260821` twice. BigQuery exposed two raw rows, confirming the documented at-least-once boundary and need to deduplicate by ID.
+- The first live deploy exposed that `ManagedStream.Close` returns `io.EOF` on a normal close. Commit `58900a9` normalized that documented behavior, added a regression test, and passed all Go gates. A Render restart then logged `flushing pipeline` followed by `shutdown complete` with no error.
+- Render service and uploaded secret files were deleted. The former URL returns HTTP 404 and `render services` returns no services.
+
+This passes the public HTTPS, BigQuery row/JSON, batch, duplicate-bound, and graceful-close checks. It does **not** prove healthy-peer availability on the required two Starter instances.
 
 ## Proof procedure
 
@@ -116,10 +130,10 @@ Replace `blocked` only with observed facts:
 
 | Criterion | Status | Evidence |
 |---|---|---|
-| Two Render Starter instances healthy | Blocked | Render create returned HTTP 402; no service was created |
-| HTTPS event ID matches BigQuery row | Blocked | Local HTTP ID/row match passed; public Render HTTPS remains |
-| Payload and flattened JSON query correctly | Pass locally | Twelve nested/flattened values matched through BigQuery REST |
-| Multi-record batch visible | Pass locally | Twelve rapidly submitted records appeared in the table |
-| Duplicate semantics bounded | Blocked | Requires controlled live duplicate/query evidence |
-| Failure is actionable and secret-safe | Pass locally | Wrong-location initialization failed clearly; secret scan was clean |
-| All proof resources removed | Blocked | `events` table and proof service-account key remain for resumed proof |
+| Two Render Starter instances healthy | Blocked | Starter create returned HTTP 402; Free proved only one instance |
+| HTTPS event ID matches BigQuery row | Pass | Twelve public Render HTTPS IDs matched twelve BigQuery rows |
+| Payload and flattened JSON query correctly | Pass | Twelve nested/flattened values matched through BigQuery REST |
+| Multi-record batch visible | Pass | Twelve rapidly submitted HTTPS records appeared in the table |
+| Duplicate semantics bounded | Pass | Controlled ID produced two raw rows; docs deduplicate by ID |
+| Failure is actionable and secret-safe | Pass | Wrong-location initialization failed clearly; secret scan was clean |
+| All proof resources removed | Blocked | Render service is deleted; `events` and proof service-account key remain for resumed paid proof |
