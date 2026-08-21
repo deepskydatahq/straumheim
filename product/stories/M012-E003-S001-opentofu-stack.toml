@@ -1,7 +1,7 @@
 id = "M012-E003-S001"
 parent = "M012-E003"
 title = "Provision Cloud Run Pub/Sub and keyless IAM"
-status = "ready"
+status = "complete"
 triage = "plan"
 created = 2026-08-21
 
@@ -31,3 +31,7 @@ depends_on = ["M012-E002-S001"]
 [handoff]
 implementation_hints = "Use google_cloud_run_v2_service and authenticated push OIDC. Make project/region/image digest inputs."
 reference_files = ["product/missions/M012-gcp-native-runtime.toml"]
+
+[execution]
+completed = 2026-08-21
+evidence = "infra/gcp provisions EU Cloud Run collector/writer, authenticated wrapped push, retry/DLQ subscriptions, BigQuery dataset, config secrets, Artifact Registry, budgets/alerts, and resource-scoped native identities. Image validation requires sha256, local state/key files are ignored, and tofu fmt/init/validate pass with google v6.50.0."

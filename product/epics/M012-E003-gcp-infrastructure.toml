@@ -1,7 +1,7 @@
 id = "M012-E003"
 parent = "M012"
 title = "Reproducible GCP infrastructure and keyless IAM"
-status = "ready"
+status = "complete"
 created = 2026-08-21
 depends_on = ["M012-E002"]
 

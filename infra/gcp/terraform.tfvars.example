@@ -1,0 +1,15 @@
+project_id  = "your-approved-project"
+environment = "proof"
+region      = "europe-west1"
+
+# Build/push first, then resolve and paste the immutable digest.
+image = "europe-west1-docker.pkg.dev/your-approved-project/straumheim/straumheim@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+cors_allowed_origins = ["https://app.example.com"]
+dataset_id          = "straumheim_proof"
+delete_proof_data_on_destroy = true
+
+# Optional existing Monitoring channels and budget.
+notification_channel_ids = []
+billing_account_id       = ""
+monthly_budget_amount    = 25

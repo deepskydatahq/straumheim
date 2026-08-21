@@ -1,7 +1,7 @@
 id = "M012-E003-S002"
 parent = "M012-E003"
 title = "Define immutable Artifact Registry delivery"
-status = "ready"
+status = "complete"
 triage = "plan"
 created = 2026-08-21
 
@@ -28,3 +28,7 @@ depends_on = ["M012-E003-S001"]
 [handoff]
 implementation_hints = "Keep deployment workflow manually gated until live proof and production environment approvals exist."
 reference_files = [".github/workflows/release.yml"]
+
+[execution]
+completed = 2026-08-21
+evidence = ".github/workflows/gcp-deploy.yml uses GitHub OIDC/WIF, pushes Artifact Registry by commit, passes the build sha256 digest to validated OpenTofu, plans by default, and gates apply by GitHub environment. infra/gcp/README.md documents bootstrap, IAM, plan/apply, rollback, and teardown; YAML and tofu validation pass."
