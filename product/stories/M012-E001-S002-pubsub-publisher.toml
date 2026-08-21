@@ -1,7 +1,7 @@
 id = "M012-E001-S002"
 parent = "M012-E001"
 title = "Implement confirmed Pub/Sub publisher pipeline"
-status = "ready"
+status = "complete"
 triage = "ready"
 created = 2026-08-21
 
@@ -28,3 +28,7 @@ depends_on = ["M012-E001-S001"]
 [handoff]
 implementation_hints = "Hide the Google client behind a publish-result interface and wait synchronously in Ingest."
 reference_files = ["product/missions/M012-gcp-native-runtime.toml"]
+
+[execution]
+completed = 2026-08-21
+evidence = "internal/pubsub implements ADC-backed Pub/Sub v2 publishing behind small fakes, serializes received_at explicitly, publishes ID/protocol attributes, waits for every result, fails before partial serialization, and closes publisher/client; focused tests pass."

@@ -1,7 +1,7 @@
 id = "M012-E001-S003"
 parent = "M012-E001"
 title = "Implement Pub/Sub push BigQuery writer"
-status = "ready"
+status = "complete"
 triage = "ready"
 created = 2026-08-21
 
@@ -28,3 +28,7 @@ depends_on = ["M012-E001-S001"]
 [handoff]
 implementation_hints = "Separate envelope decoding from HTTP; Cloud Run IAM rejects unauthenticated requests before the handler."
 reference_files = ["internal/sink/bigquery.go"]
+
+[execution]
+completed = 2026-08-21
+evidence = "internal/pubsub.PushHandler decodes bounded standard push envelopes, validates canonical IDs/timestamps and ID attributes, writes synchronously, returns 204 only on sink success, and returns non-2xx for retry/DLQ. Focused tests cover valid, malformed, unavailable, and sink-failure paths."
