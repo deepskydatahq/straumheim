@@ -2,7 +2,7 @@
 
 Judgment date: 2026-08-21
 
-Result: **blocked — all functional and two-instance checks pass; one owner-level cleanup criterion remains**
+Result: **complete — all 14 mission criteria pass**
 
 | # | Mission criterion | Result | Evidence |
 |---:|---|---|---|
@@ -18,7 +18,7 @@ Result: **blocked — all functional and two-instance checks pass; one owner-lev
 | 10 | Go quality gates | Pass | gofmt, `go test ./...`, `go test -race ./...`, `go build ./...`, and `go vet ./...`; Docker scratch build passes |
 | 11 | HTTPS event matches BigQuery row | Pass | Twenty two-instance Starter HTTPS IDs matched twenty BigQuery rows and JSON values |
 | 12 | Live batch and duplicate semantics | Pass | Twenty-event Starter batch passed; a controlled ID produced two raw rows, bounded by documented ID deduplication |
-| 13 | Proof resources removed | **Blocked** | Render/table/local key removed; owner must delete the empty dataset and cloud IAM key/account |
+| 13 | Proof resources removed | Pass | Render services/secrets, table/dataset, local/temp credentials, and mission cloud key removed; public key metadata confirms revocation |
 | 14 | Decision and Cloud Storage boundary documented | Pass | `docs/destinations/bigquery.md` selects direct default-stream delivery and reserves GCS for archive/replay |
 
 ## Implemented artifacts
@@ -33,8 +33,6 @@ Result: **blocked — all functional and two-instance checks pass; one owner-lev
 - `docs/destinations/bigquery.md`
 - `docs/destinations/bigquery-proof.md`
 
-## Unblock condition
+## Final judgment
 
-1. As a project/IAM owner, delete cloud key `fd00afac12905a5e67885c2aced5241f640b5db1` or the entire proof service account `render-com-straumheim@propel-data-hub.iam.gserviceaccount.com`.
-2. Delete the now-empty dataset `propel-data-hub.straumheim_test`.
-3. Confirm both actions, mark M011-E003-S002 and its parents complete, and repeat this judgment.
+The implementation, unit/race/build gates, local GCP integration, public Free proof, intended two-instance Starter proof, availability replacement drill, duplicate boundary, graceful shutdown, documentation, and cleanup all pass. M011 is complete.

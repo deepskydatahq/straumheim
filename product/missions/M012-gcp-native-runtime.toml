@@ -102,7 +102,6 @@ relevant_paths = [
     "product/missions/M011-bigquery-destination.toml",
 ]
 dependencies = [
-    "Owner deletion or explicit retention decision for the M011 proof service-account key and empty dataset",
     "An approved GCP project with billing, Cloud Run, Pub/Sub, BigQuery, Artifact Registry, IAM, Secret Manager, and Monitoring APIs available",
     "Permission to create least-privilege service accounts, IAM bindings, budgets, and an EU proof environment",
     "Ownership of the production collector domain and authority to execute or roll back DNS cutover",

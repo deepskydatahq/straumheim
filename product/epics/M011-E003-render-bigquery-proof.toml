@@ -1,7 +1,7 @@
 id = "M011-E003"
 parent = "M011"
 title = "Render-to-BigQuery deployment proof"
-status = "blocked"
+status = "complete"
 created = 2026-08-21
 depends_on = ["M011-E002"]
 
@@ -30,5 +30,5 @@ considerations = """Never commit service-account JSON. Block the live story with
 estimated_stories = 2
 
 [execution]
-blocked = 2026-08-21
-failure_reason = "The full two-instance Starter proof passed and Render/table/local credentials are removed. Completion awaits owner deletion of the empty proof dataset and cloud service-account key/account, which the runtime account cannot perform by design."
+completed = 2026-08-21
+evidence = "The full two-instance Starter proof, replacement availability drill, duplicate/failure/cleanup checks, owner dataset removal, and mission-key revocation all pass; see docs/destinations/bigquery-proof.md."

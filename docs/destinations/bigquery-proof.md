@@ -1,22 +1,22 @@
 # Render-to-BigQuery proof
 
-- **Status:** two-instance Starter Render-to-BigQuery proof passed; owner-level GCP cleanup pending
+- **Status:** complete — two-instance proof and cleanup passed
 - **Last access/proof check:** 2026-08-21
 - **Target:** two Render Starter instances in Frankfurt → EU BigQuery dataset
 
-## Current blockers
+## Final resource state
 
 | Dependency | Result |
 |---|---|
 | Sink implementation and unit tests | Ready |
 | Render CLI authentication | Available |
 | Render Starter billing/payment | Available — two Frankfurt Starter instances were created, tested, and deleted |
-| GCP credentials | Local/Render copies removed — cloud key revocation requires owner IAM permission |
+| GCP credentials | Proof key revoked; local, temporary gcloud, and Render copies removed |
 | Approved GCP proof project | Available — user explicitly approved `propel-data-hub` and `straumheim_test` |
 | BigQuery CLI (`bq`) | Missing locally; proof used authenticated BigQuery REST metadata/table-data endpoints |
-| EU proof dataset/table | Table deleted — empty dataset deletion requires owner BigQuery permission |
+| EU proof dataset/table | Table deleted by runtime identity; owner confirmed empty dataset removal |
 
-The initial two-instance request returned HTTP 402, then succeeded after billing was added. Both the Free and Starter Render services were deleted. The BigQuery table and local key were removed; deletion of the now-empty dataset and cloud service-account key requires the owner permission that the runtime account intentionally lacks.
+The initial two-instance request returned HTTP 402, then succeeded after billing was added. Both the Free and Starter Render services were deleted. The BigQuery table, dataset, local key, temporary credential config, and mission-created cloud key were removed.
 
 ## Observed local GCP integration
 
@@ -63,10 +63,11 @@ After billing was enabled, the intended Frankfurt topology passed:
 - Render proof service/secrets: deleted.
 - BigQuery `events` table: deleted; subsequent table listing was empty.
 - Local service-account JSON: securely removed with `shred`; temporary gcloud credential/config files were removed.
-- Empty dataset `propel-data-hub.straumheim_test`: deletion returned HTTP 403 because the runtime account correctly lacks `bigquery.datasets.delete`.
-- Cloud key `fd00afac12905a5e67885c2aced5241f640b5db1`: deletion returned permission denied because the runtime account correctly lacks `iam.serviceAccountKeys.delete`.
+- Empty dataset `propel-data-hub.straumheim_test`: runtime deletion correctly returned HTTP 403; the owner subsequently confirmed removal.
+- Cloud key `fd00afac12905a5e67885c2aced5241f640b5db1`: runtime revocation correctly returned permission denied; after owner removal, Google's public service-account certificate endpoint no longer listed the key.
+- The service account remains owner-managed with unrelated keys outside this proof; M012 will use keyless Cloud Run identities rather than reuse it.
 
-An owner must delete the cloud key (or the whole proof service account) and the empty dataset before cleanup passes. The unauthenticated Google service-account certificate endpoint still listed key `fd00afac12905a5e67885c2aced5241f640b5db1` during the final 2026-08-21 check, so revocation cannot be inferred from local deletion. No private-key copy remains in the worktree, local Downloads directory, temporary gcloud config, or Render workspace.
+Cleanup passes. No mission private-key copy remains in the worktree, local Downloads directory, temporary gcloud config, Render workspace, or Google's active public-key set.
 
 ## Proof procedure
 
@@ -158,4 +159,4 @@ Replace `blocked` only with observed facts:
 | Multi-record batch visible | Pass | Twelve rapidly submitted HTTPS records appeared in the table |
 | Duplicate semantics bounded | Pass | Controlled ID produced two raw rows; docs deduplicate by ID |
 | Failure is actionable and secret-safe | Pass | Wrong-location initialization failed clearly; secret scan was clean |
-| All proof resources removed | Blocked | Render/table/local key removed; owner must delete empty dataset and cloud IAM key/account |
+| All proof resources removed | Pass | Render services/secrets, table/dataset, local/temp credentials, and mission cloud key removed |

@@ -3,7 +3,7 @@
 
 id = "M011"
 title = "Direct BigQuery sink with JSON payloads and Render proof"
-status = "blocked"
+status = "complete"
 created = 2026-08-21
 
 [outcome]
@@ -20,9 +20,8 @@ user_progress = "From 'Render can collect events but only proof them in logs' to
 
 [execution]
 mode = "implementation"
-blocked = 2026-08-21
-failure_reason = "Implementation and every functional/two-instance proof check pass. Render service/secrets, BigQuery table, local key, and temporary credential config are removed. Mission completion awaits owner deletion of the empty proof dataset and cloud service-account key/account, which the least-privilege runtime identity cannot delete."
-evidence = "See docs/destinations/bigquery-proof.md, docs/destinations/m011-judgment.md, and product/stories/M011-E003-S002-live-proof.toml."
+completed = 2026-08-21
+evidence = "All fourteen criteria pass: implementation and gates, local and public BigQuery proofs, intended two-instance Starter availability, duplicate/failure semantics, documentation, and full proof cleanup. See docs/destinations/bigquery-proof.md and docs/destinations/m011-judgment.md."
 
 [scope]
 in_scope = [

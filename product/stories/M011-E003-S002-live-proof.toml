@@ -1,7 +1,7 @@
 id = "M011-E003-S002"
 parent = "M011-E003"
 title = "Run disposable Render-to-BigQuery proof"
-status = "blocked"
+status = "complete"
 triage = "ready"
 created = 2026-08-21
 
@@ -37,6 +37,5 @@ implementation_hints = "Requires explicit usable GCP project/dataset and Render 
 reference_files = ["product/missions/M011-bigquery-destination.toml"]
 
 [execution]
-blocked = 2026-08-21
-failure_reason = "All functional and two-instance acceptance checks pass. Final cleanup is blocked only because the least-privilege runtime account cannot delete the empty dataset or revoke its own cloud IAM key; an owner must perform those two actions."
-evidence = "docs/destinations/bigquery-proof.md records twenty matching Starter HTTPS/BigQuery rows, two instances, 120/120 health checks during replacement, JSON/batch/duplicate semantics, clean shutdown, deleted Render service/table/local key, and the two owner-level cleanup denials."
+completed = 2026-08-21
+evidence = "docs/destinations/bigquery-proof.md records twenty matching Starter HTTPS/BigQuery rows, two instances, 120/120 health checks during replacement, JSON/batch/duplicate semantics, clean shutdown, deleted Render/table/dataset/local credentials, and public confirmation that the mission cloud key is revoked."
