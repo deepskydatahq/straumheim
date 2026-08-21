@@ -191,7 +191,10 @@ func runCollector(cfg *config.Config) int {
 		slog.Error("failed to initialize Pub/Sub publisher", "error", err)
 		return 1
 	}
-	router := buildCollectorRouter(cfg, publisher)
+	promReg := prometheus.NewRegistry()
+	met := metrics.NewMetrics(promReg)
+	publisher.SetObserver(met)
+	router := buildCollectorRouterWithRegistry(cfg, publisher, promReg)
 	return serveRequestScoped(cfg, router, publisher.Close)
 }
 
@@ -213,7 +216,9 @@ func runWriter(cfg *config.Config) int {
 		}
 		return 1
 	}
-	router := buildWriterRouter(cfg, writer)
+	promReg := prometheus.NewRegistry()
+	met := metrics.NewMetrics(promReg)
+	router := buildWriterRouterWithRegistry(cfg, writer, met, promReg)
 	return serveRequestScoped(cfg, router, writer.Close)
 }
 
@@ -241,18 +246,26 @@ func validateWriterConfig(cfg *config.Config) error {
 }
 
 func buildCollectorRouter(cfg *config.Config, publisher pipeline.Pipeline) *chi.Mux {
-	r := newRequestScopedRouter(cfg)
+	return buildCollectorRouterWithRegistry(cfg, publisher, prometheus.NewRegistry())
+}
+
+func buildCollectorRouterWithRegistry(cfg *config.Config, publisher pipeline.Pipeline, reg *prometheus.Registry) *chi.Mux {
+	r := newRequestScopedRouter(cfg, reg)
 	registerInputs(r, cfg.Inputs, publisher)
 	return r
 }
 
 func buildWriterRouter(cfg *config.Config, writer pubsubprofile.RecordWriter) *chi.Mux {
-	r := newRequestScopedRouter(cfg)
-	r.Post(cfg.Runtime.PubSub.PushPath, pubsubprofile.NewPushHandler(writer).ServeHTTP)
+	return buildWriterRouterWithRegistry(cfg, writer, nil, prometheus.NewRegistry())
+}
+
+func buildWriterRouterWithRegistry(cfg *config.Config, writer pubsubprofile.RecordWriter, observer pubsubprofile.Observer, reg *prometheus.Registry) *chi.Mux {
+	r := newRequestScopedRouter(cfg, reg)
+	r.Post(cfg.Runtime.PubSub.PushPath, pubsubprofile.NewObservedPushHandler(writer, observer).ServeHTTP)
 	return r
 }
 
-func newRequestScopedRouter(cfg *config.Config) *chi.Mux {
+func newRequestScopedRouter(cfg *config.Config, reg *prometheus.Registry) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
 	r.Use(requestLogger)
@@ -262,6 +275,7 @@ func newRequestScopedRouter(cfg *config.Config) *chi.Mux {
 		AllowedHeaders: []string{"Content-Type"},
 	}))
 	r.Get("/health", healthHandler)
+	r.Get("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}).ServeHTTP)
 	return r
 }
 

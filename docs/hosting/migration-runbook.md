@@ -1,6 +1,6 @@
 # Hetzner-to-Render migration runbook
 
-Status: **planned, not approved for production cutover**. Live M008 proof stories must pass first.
+Status: **historical, superseded for production by M012**. Render proof resources are de-provisioned. Do not execute this runbook; use [the GCP-native runbook](../operations/gcp-runbook.md). The content remains as rollback/decision evidence from M008.
 
 ## Owners
 

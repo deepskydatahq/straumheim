@@ -1,7 +1,7 @@
 id = "M012-E004-S002"
 parent = "M012-E004"
 title = "Document GCP operations cost and cutover"
-status = "ready"
+status = "complete"
 triage = "plan"
 created = 2026-08-21
 
@@ -28,3 +28,7 @@ depends_on = ["M012-E003-S001", "M012-E004-S001"]
 [handoff]
 implementation_hints = "Keep costs formula-based and link official calculators/pricing rather than promising a fixed bill."
 reference_files = ["docs/hosting/migration-runbook.md"]
+
+[execution]
+completed = 2026-08-21
+evidence = "docs/operations/gcp-runbook.md defines owners, preflight/live gates, alert response, Pub/Sub/BigQuery incidents, formula-based official-pricing cost model, budget, DNS cutover/rollback, seven-day soak, proof teardown, and gated Render-template retirement. Hosting docs now mark Render as historical and M012 as current."

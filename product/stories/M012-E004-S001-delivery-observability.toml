@@ -1,7 +1,7 @@
 id = "M012-E004-S001"
 parent = "M012-E004"
 title = "Add request delivery metrics and alert policies"
-status = "ready"
+status = "complete"
 triage = "plan"
 created = 2026-08-21
 
@@ -28,3 +28,7 @@ depends_on = ["M012-E002-S001"]
 [handoff]
 implementation_hints = "Prefer provider metrics for queue state; application metrics/logs should describe request outcomes and IDs without payloads."
 reference_files = ["product/missions/M010-operational-health.toml"]
+
+[execution]
+completed = 2026-08-21
+evidence = "Collector/writer modes expose Prometheus publish/push outcomes and last confirmed delivery; unit tests verify bounded labels and gauges. OpenTofu defines Cloud Run 5xx, Pub/Sub oldest-age/backlog, and DLQ alerts while /health remains process liveness."

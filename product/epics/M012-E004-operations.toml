@@ -1,7 +1,7 @@
 id = "M012-E004"
 parent = "M012"
 title = "Delivery health, alerts, cost, and migration operations"
-status = "ready"
+status = "complete"
 created = 2026-08-21
 depends_on = ["M012-E002"]
 

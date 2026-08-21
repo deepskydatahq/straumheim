@@ -22,12 +22,18 @@ type RecordWriter interface {
 // PushHandler handles wrapped Pub/Sub push requests. Cloud Run IAM is
 // responsible for authenticating the configured push service account.
 type PushHandler struct {
-	writer RecordWriter
+	writer   RecordWriter
+	observer Observer
 }
 
 // NewPushHandler creates a Pub/Sub push handler for a request-scoped writer.
 func NewPushHandler(writer RecordWriter) *PushHandler {
 	return &PushHandler{writer: writer}
+}
+
+// NewObservedPushHandler creates a push handler with delivery metrics.
+func NewObservedPushHandler(writer RecordWriter, observer Observer) *PushHandler {
+	return &PushHandler{writer: writer, observer: observer}
 }
 
 type pushEnvelope struct {
@@ -48,6 +54,7 @@ type pushMessage struct {
 // non-success response leaves acknowledgement and bounded retries to Pub/Sub.
 func (h *PushHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.writer == nil {
+		h.observePush(resultFailure)
 		slog.Error("pubsub push writer unavailable")
 		http.Error(w, "writer unavailable", http.StatusServiceUnavailable)
 		return
@@ -55,6 +62,7 @@ func (h *PushHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	recordValue, envelope, err := decodePushRequest(w, r)
 	if err != nil {
+		h.observePush(resultMalformed)
 		slog.Error("pubsub push rejected",
 			"message_id", envelope.Message.MessageID,
 			"delivery_attempt", envelope.DeliveryAttempt,
@@ -64,6 +72,7 @@ func (h *PushHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.writer.Write(r.Context(), []record.Record{recordValue}); err != nil {
+		h.observePush(resultFailure)
 		slog.Error("pubsub push delivery failed",
 			"message_id", envelope.Message.MessageID,
 			"record_id", recordValue.ID,
@@ -74,7 +83,14 @@ func (h *PushHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.observePush(resultSuccess)
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *PushHandler) observePush(result string) {
+	if h.observer != nil {
+		h.observer.RecordPubSubPush(result)
+	}
 }
 
 func decodePushRequest(w http.ResponseWriter, r *http.Request) (record.Record, pushEnvelope, error) {

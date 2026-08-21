@@ -24,6 +24,7 @@ type MessagePublisher interface {
 type PublisherPipeline struct {
 	publisher   MessagePublisher
 	closeClient func() error
+	observer    Observer
 }
 
 // NewPublisherPipeline constructs a publisher pipeline from testable dependencies.
@@ -33,6 +34,9 @@ func NewPublisherPipeline(publisher MessagePublisher, closeClient func() error) 
 	}
 	return &PublisherPipeline{publisher: publisher, closeClient: closeClient}
 }
+
+// SetObserver attaches delivery metrics before the pipeline serves requests.
+func (p *PublisherPipeline) SetObserver(observer Observer) { p.observer = observer }
 
 // NewGooglePublisherPipeline creates a Pub/Sub publisher using Application Default Credentials.
 func NewGooglePublisherPipeline(ctx context.Context, project, topic string) (*PublisherPipeline, error) {
@@ -72,6 +76,7 @@ func (p *PublisherPipeline) Ingest(ctx context.Context, records []record.Record)
 	for i, r := range records {
 		data, err := marshalRecord(r)
 		if err != nil {
+			p.observePublish(r.Protocol, resultFailure)
 			return err
 		}
 		messages[i] = data
@@ -82,14 +87,17 @@ func (p *PublisherPipeline) Ingest(ctx context.Context, records []record.Record)
 			"protocol":  r.Protocol,
 		})
 		if result == nil {
+			p.observePublish(r.Protocol, resultFailure)
 			return fmt.Errorf("pubsub publisher: publish record %q returned no result", r.ID)
 		}
 		pending = append(pending, pendingPublish{recordID: r.ID, result: result})
 	}
-	for _, publish := range pending {
+	for i, publish := range pending {
 		if _, err := publish.result.Get(ctx); err != nil {
+			p.observePublish(records[i].Protocol, resultFailure)
 			return fmt.Errorf("pubsub publisher: confirm record %q: %w", publish.recordID, err)
 		}
+		p.observePublish(records[i].Protocol, resultSuccess)
 	}
 	return nil
 }
@@ -100,6 +108,12 @@ func (p *PublisherPipeline) Close() error {
 		p.publisher.Stop()
 	}
 	return p.closeClient()
+}
+
+func (p *PublisherPipeline) observePublish(protocol, result string) {
+	if p.observer != nil {
+		p.observer.RecordPubSubPublish(protocol, result)
+	}
 }
 
 type googleMessagePublisher struct {
