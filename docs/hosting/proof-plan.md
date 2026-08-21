@@ -4,7 +4,7 @@ Purpose: verify the M008 decision in a disposable Frankfurt Starter service. Thi
 
 ## Prerequisites
 
-- Render account/workspace with billing for one Starter service
+- Render account/workspace with billing for two Starter instances ($14/month before extras)
 - GitHub access to `deepskydatahq/straumheim`
 - email notification enabled; optionally a connected Slack workspace
 - temporary branch if failure-drill code is required
@@ -19,7 +19,7 @@ Estimated proof cost is prorated from $7/month; delete the service after evidenc
    - service: `straumheim-proof`
    - type/runtime: web/Docker
    - plan/region: Starter/Frankfurt
-   - one instance, no persistent disk
+   - two instances, no persistent disk
    - health path: `/health`
    - shutdown delay: 30 seconds
    - auto-deploy: after CI checks pass

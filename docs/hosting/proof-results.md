@@ -54,7 +54,7 @@ Observed first cycle:
 
 The single Free instance self-healed without SSH, but public health was unavailable for approximately **52 seconds** (04:57:29–04:58:21). The disposable code failed again after two minutes and started a second recovery cycle, confirming repeatability. The service was then restored to the normal branch.
 
-**Implication:** Render automates recovery, but one Starter/Free instance does not provide continuous availability during replacement. Multiple healthy instances would be required to hide this interval and would increase cost. Graceful shutdown completed for an empty/fast stdout buffer; a blocked destination could still exceed the platform window and lose memory.
+**Implication:** Render automates recovery, but one Starter/Free instance does not provide continuous availability during replacement. The approved production Blueprint now uses two Starter instances ($14/month) so a healthy peer can continue serving. Graceful shutdown completed for an empty/fast stdout buffer; a blocked destination could still exceed the platform window and lose memory.
 
 ## Unhealthy candidate deployment
 
@@ -105,4 +105,4 @@ An immediate webhook with proof ID `m008-after-cold-start-20260821T053823Z` retu
 
 At `2026-08-21T06:32:56Z`, service `srv-da3tio740ujc73cbsqg0` was deleted through the Render CLI. Listing workspace services returned no resources, and the former proof URL returned HTTP 404. The temporary Git proof branches and local worktrees were also deleted. No paid Render resource was created.
 
-A short Starter smoke test remains recommended before production cutover to confirm the explicit 30-second shutdown setting and absence of Free-tier idle spin-down.
+A short two-instance Starter smoke test remains recommended before production cutover to confirm peer continuity, the explicit 30-second shutdown setting, and absence of Free-tier idle spin-down.

@@ -10,24 +10,25 @@ Use a **Render web service on the Starter plan in Frankfurt**, deployed as a Git
 
 - `autoDeployTrigger: checksPass` so only commits with successful GitHub checks deploy;
 - `healthCheckPath: /health` for candidate gating and continuous process recovery;
-- one Starter instance (512 MB, 0.5 CPU) with no persistent disk;
+- two Starter instances (512 MB and 0.5 CPU each) with no persistent disk, so one healthy peer can serve while Render replaces the other;
 - `maxShutdownDelaySeconds: 30`, matching Straumheim’s 10-second HTTP shutdown budget with platform margin;
 - `STRAUMHEIM_CONFIG=/etc/secrets/config.yaml` and a Render-managed `config.yaml` secret file;
 - platform HTTPS and, after proof, a custom collector domain;
 - failure notifications by email and optionally Slack;
 - stdout as proof sink, persisted in Render logs; production uses an external Postgres/ClickHouse sink.
 
-The expected collector compute cost is **$7/month**, excluding destination database, bandwidth, domain, taxes, and currency conversion.
+The expected collector compute cost is **$14/month** (2 × $7 Starter), excluding destination database, bandwidth, domain, taxes, and currency conversion. This remains below M008's EUR 20/month target before currency/tax variation.
 
 ## Why Render
 
 Render is the only preferred candidate that combines all of the following below the mission’s cost ceiling:
 
 1. continuous application health requests, traffic removal, restart, and unhealthy-service notification;
-2. health-gated zero-downtime deployment that leaves the old instance serving when a candidate fails;
-3. always-running CPU suitable for Straumheim’s timer-driven batch goroutine;
-4. Frankfurt placement, managed TLS, secret files, external logs, and rollback; and
-5. a simple source-controlled Blueprint without a VM, reverse proxy, or monitor to maintain.
+2. two-instance operation so a healthy peer can continue serving during replacement;
+3. health-gated zero-downtime deployment that leaves the old revision serving when a candidate fails;
+4. always-running CPU suitable for Straumheim’s timer-driven batch goroutine;
+5. Frankfurt placement, managed TLS, secret files, external logs, and rollback; and
+6. a simple source-controlled Blueprint without a VM, reverse proxy, or monitor to maintain.
 
 ## Rejected alternatives
 
@@ -50,9 +51,9 @@ The public GHCR image remains the portable distribution artifact. If production 
 ## What this decision does not guarantee
 
 - `/health` currently says only that the process responds; it does not test destinations.
-- Render restart or deploy can discard records held in the in-memory buffer.
+- Render restart or deploy can discard records held in the affected instance's in-memory buffer. Two instances improve endpoint availability but do not replicate queued records or make delivery durable.
 - Failed sink writes are logged and counted but not retried.
-- A single Starter instance can have an availability gap while Render replaces an unhealthy instance. The one-instance Free proof observed approximately 52 seconds of HTTP 502 during automatic replacement; Starter uses the same one-instance topology unless scaled.
+- The one-instance Free proof observed approximately 52 seconds of HTTP 502 during automatic replacement. Production therefore uses two Starter instances so a healthy peer remains available. Each instance must be sized to carry full current traffic during peer recovery.
 - Render’s platform automation does not make accepted events durable.
 
 These are application roadmap items captured in M009 and M010, not reasons to retain a VM.

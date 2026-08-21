@@ -21,7 +21,7 @@ user_progress = "From 'an unmonitored Hetzner VM that depends on manual maintena
 [execution]
 mode = "implementation"
 completed = 2026-08-21
-evidence = "All fourteen mission criteria pass. Render was selected from official evidence; a disposable Frankfurt service validated collection, health-gated deploys, automatic restart, graceful drain, rollback, cold start, centralized logs, and operator email notification; migration and reliability follow-ups are documented. See docs/hosting/mission-judgment.md."
+evidence = "All fourteen mission criteria pass. Render was selected from official evidence; a disposable Frankfurt service validated collection, health-gated deploys, automatic restart, graceful drain, rollback, cold start, centralized logs, and operator email notification. Production is configured for two Starter instances at $14/month so one healthy peer can serve during replacement; migration and reliability follow-ups are documented. See docs/hosting/mission-judgment.md."
 
 [scope]
 in_scope = [

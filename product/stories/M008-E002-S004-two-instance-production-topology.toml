@@ -1,0 +1,41 @@
+id = "M008-E002-S004"
+parent = "M008-E002"
+title = "Adopt two-instance Render production topology"
+status = "complete"
+triage = "ready"
+created = 2026-08-21
+
+[outcome]
+description = "Configure and document two Render Starter instances so one healthy collector remains available while Render replaces an unhealthy peer."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "configuration"
+description = "render.yaml sets numInstances to 2 on the Frankfurt Starter service"
+
+[[acceptance_criteria.criteria]]
+test = "cost"
+description = "Hosting documents state the expected collector compute cost is $14/month and retain the EUR 20 ceiling"
+
+[[acceptance_criteria.criteria]]
+test = "reliability"
+description = "Decision and migration docs require each instance to handle full current traffic and explain that two instances reduce availability interruption but do not make in-memory events durable"
+
+[[acceptance_criteria.criteria]]
+test = "validation"
+description = "render.yaml validates against the official Render Blueprint schema"
+
+[context]
+relevant_paths = ["render.yaml", "docs/hosting/decision.md", "docs/hosting/platform-comparison.md", "docs/hosting/migration-runbook.md", "docs/hosting/proof-results.md"]
+input_fixtures = []
+depends_on = ["M008-E002-S003"]
+
+[handoff]
+implementation_hints = "Use two Starter instances at $7 each. Keep no persistent disk so health-gated rolling deploys and replacement remain available."
+reference_files = ["docs/hosting/mission-judgment.md"]
+
+[execution]
+completed = 2026-08-21
+evidence = "render.yaml now configures two Frankfurt Starter instances and validates against Render's official schema. Decision, comparison, proof, judgment, and migration documents use the $14/month topology and preserve the distinction between availability and event durability."

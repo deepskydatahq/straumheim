@@ -11,7 +11,7 @@ A live Frankfurt Free service validated Render's platform behavior without addin
 | 1 | Requirements distinguish platform/application ownership | Pass | `requirements.md`: mandatory gates, responsibility boundary, runtime audit |
 | 2 | Preferred platforms scored from official evidence | Pass | `platform-comparison.md`: one weighted matrix and linked official sources |
 | 3 | DigitalOcean excluded unless necessary | Pass | Render passes all gates; exclusion is documented in comparison and decision |
-| 4 | EU always-available cost and exclusions | Pass | Render $7; Cloud Run $44.71 safe always-active estimate; Railway $6–10 range with assumptions |
+| 4 | EU always-available cost and exclusions | Pass | Render production topology is $14 for two Starter instances; Cloud Run $44.71 safe always-active estimate; Railway $6–10 range with assumptions |
 | 5 | Live immutable deployment with secrets, TLS, health | Pass | Frankfurt service built exact commit `d6a16cd`; secret-file config, verified TLS, and `/health` passed |
 | 6 | Synthetic HTTPS event reaches non-production sink | Pass | Event ID `01a022aa-5a3f-7cd3-a634-2120dcad8e72` matched the stdout record in Render logs |
 | 7 | Unhealthy candidate does not replace healthy deploy | Pass | Candidate `763c988` failed after the health window while the previous revision stayed HTTP 200 and accepted a new event |
@@ -27,7 +27,7 @@ A live Frankfurt Free service validated Render's platform behavior without addin
 
 - Baseline Docker deployment took about 54 seconds.
 - Running health failure was removed from traffic after roughly 15 seconds.
-- A single instance returned 502 for roughly 52 seconds while Render replaced it.
+- A single instance returned 502 for roughly 52 seconds while Render replaced it; the approved production topology therefore uses two Starter instances.
 - An unhealthy candidate took about 15 minutes to be marked `update_failed`, but the healthy revision served throughout.
 - API rollback restored the prior commit in about 22 seconds while health remained 200.
 - Graceful shutdown completed for the fast stdout proof sink; this does not guarantee a blocked database sink drains in time.

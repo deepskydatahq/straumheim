@@ -28,8 +28,8 @@ dependencies = ["Access to selected platform", "A disposable sink or platform-pe
 [notes]
 considerations = """Do not use production traffic or perform DNS cutover. Block live stories with exact missing access rather than fabricating results."""
 
-estimated_stories = 3
+estimated_stories = 4
 
 [execution]
 completed = 2026-08-21
-evidence = "A disposable Frankfurt Free service validated HTTPS collection, centralized delivery logs, failed-candidate isolation, automatic health recovery, graceful drain, rollback, cold start, and operator email notification. The service was deleted after evidence capture."
+evidence = "A disposable Frankfurt Free service validated HTTPS collection, centralized delivery logs, failed-candidate isolation, automatic health recovery, graceful drain, rollback, cold start, and operator email notification. The service was deleted after evidence capture. Production is configured for two Starter instances at $14/month to retain a healthy peer during replacement."

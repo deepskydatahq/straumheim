@@ -6,7 +6,7 @@ Research date: **2026-08-20**. Prices are provider list prices in USD before tax
 
 | Candidate | Mandatory gates | Weighted score | Verdict |
 |---|---|---:|---|
-| **Render Starter, Frankfurt** | Pass | **95/100** | Selected for proof |
+| **Render Starter ×2, Frankfurt** | Pass | **95/100** | Selected and validated |
 | Google Cloud Run, Belgium | **Fail: cost ceiling** with safe background CPU | 85/100 | Rejected for this workload |
 | Railway Hobby, EU | **Fail: no continuous health endpoint monitoring** | 79/100 | Rejected |
 | DigitalOcean App Platform | Not evaluated | — | Not needed; product preference says fallback only |
@@ -41,11 +41,11 @@ Mandatory failures override weighted score.
 
 ### Fit and caveats
 
-- **Passes all gates at $7/month** before bandwidth, tax, destination DB, and domain.
+- **Passes all gates at $14/month for two Starter instances** before bandwidth, tax, destination DB, and domain. A single instance is $7/month, but the proof showed a recovery availability gap.
 - A Git-backed Docker service is preferable to `:latest`: each deploy is tied to a commit/build artifact, automatic deployment can wait for CI, and rollback can reuse the artifact. A registry-backed alternative must use a digest and an explicit deploy hook because Render does not watch tag changes.
 - The one-time secret-file upload is acceptable setup, not recurring maintenance. Secret values must never enter `render.yaml`.
 - `/health` only proves process liveness today. Render can recover a wedged process, but cannot detect a failed sink while that endpoint remains 200.
-- A Starter instance is single-instance. The one-instance Free proof observed approximately 52 seconds of HTTP 502 during automatic replacement; Starter uses the same one-instance topology unless scaled. Zero event loss is not promised.
+- The one-instance Free proof observed approximately 52 seconds of HTTP 502 during automatic replacement. Production uses two Starter instances so a healthy peer can remain available. Each peer must handle full current traffic; two processes still have independent in-memory buffers, so zero event loss is not promised.
 
 ## Google Cloud Run
 
@@ -103,7 +103,7 @@ Render satisfies every mandatory requirement and the budget. M008 explicitly mak
 Reconsider the winner if any of these change:
 
 - Render removes affordable continuous health/restart or EU hosting;
-- the workload requires multi-instance availability rather than automatic single-instance recovery;
+- the workload outgrows two Starter instances or requires stronger regional/availability guarantees;
 - Cloud Run offers a safe sub-$20 always-on configuration for background work;
 - Straumheim moves flushing into durable request-independent work and no longer needs an always-running application process; or
 - production egress/static-IP requirements materially change total cost.

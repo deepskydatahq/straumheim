@@ -21,7 +21,7 @@ Do not schedule cutover until:
 
 - [ ] M008-E002-S002 and M008-E002-S003 are complete with live evidence
 - [ ] production destination supports encrypted network access from Render Frankfurt
-- [ ] current event volume fits one Starter instance with measured margin
+- [ ] each Starter instance can carry full current event volume with measured margin while its peer is unavailable
 - [ ] Render service health and deploy-failure email/Slack notifications are tested
 - [ ] an interim alert exists for `straumheim_records_failed_total` or `sink write failed`
 - [ ] destination credentials are least privilege and separately rotatable
@@ -38,7 +38,7 @@ If any prerequisite is false, stop. Do not interpret this runbook as approval to
 3. Export the effective Hetzner Straumheim configuration **without secrets** for comparison.
 4. Record the exact production image digest or source commit currently running.
 5. Verify the latest main commit passes CI and corresponds to the intended release.
-6. Apply `render.yaml` to create the Frankfurt service. For production, rename `straumheim-proof` deliberately and review the Blueprint diff; do not silently reuse proof infrastructure.
+6. Apply `render.yaml` to create two Frankfurt Starter instances. For production, rename `straumheim-proof` deliberately and review the Blueprint diff; do not silently reuse proof infrastructure.
 7. Upload production `config.yaml` as a Render secret file. It appears at `/etc/secrets/config.yaml`. Never put its contents in Git, ticket text, logs, or screenshots.
 8. Set production destination credentials as Render secret environment variables or inside the secret file. Prefer environment substitution and least-privilege credentials.
 9. Keep the generated `onrender.com` URL enabled during validation.
@@ -54,7 +54,8 @@ Confirm:
 - no local file sink is enabled;
 - destination TLS, database/table, credentials, and timeouts are correct;
 - stdout logging does not expose unacceptable event payload data in production;
-- buffer capacity/flush settings fit measured volume and shutdown window.
+- `numInstances` is 2, each instance can handle full traffic during peer recovery, and both fit the expected $14/month compute budget;
+- buffer capacity/flush settings fit measured per-instance volume and shutdown window.
 
 ## Phase 2: Validate the generated Render endpoint
 
