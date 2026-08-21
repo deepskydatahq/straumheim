@@ -3,6 +3,7 @@ package sink
 import (
 	"context"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 	"time"
@@ -384,6 +385,24 @@ type fakeAppendResult struct {
 
 func (f *fakeAppendResult) GetResult(context.Context) (int64, error) {
 	return f.offset, f.err
+}
+
+func TestManagedBigQueryAppenderCloseTreatsEOFAsClean(t *testing.T) {
+	closedClient := false
+	a := &managedBigQueryAppender{
+		closeStream: func() error { return io.EOF },
+		closeClient: func() error {
+			closedClient = true
+			return nil
+		},
+	}
+
+	if err := a.Close(); err != nil {
+		t.Fatalf("Close() error: %v", err)
+	}
+	if !closedClient {
+		t.Fatal("expected client to close")
+	}
 }
 
 func TestManagedBigQueryAppenderErrors(t *testing.T) {

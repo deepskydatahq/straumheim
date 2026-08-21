@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"cloud.google.com/go/bigquery"
@@ -466,5 +467,10 @@ func (a *managedBigQueryAppender) Append(ctx context.Context, rows [][]byte) err
 }
 
 func (a *managedBigQueryAppender) Close() error {
-	return errors.Join(a.closeStream(), a.closeClient())
+	streamErr := a.closeStream()
+	// ManagedStream.Close reports io.EOF for a normal, locally initiated close.
+	if errors.Is(streamErr, io.EOF) {
+		streamErr = nil
+	}
+	return errors.Join(streamErr, a.closeClient())
 }
