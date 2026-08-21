@@ -1,7 +1,7 @@
 id = "M012-E005"
 parent = "M012"
 title = "EU live proof, teardown, and production cutover"
-status = "ready"
+status = "blocked"
 created = 2026-08-21
 depends_on = ["M012-E003", "M012-E004"]
 
@@ -24,3 +24,7 @@ dependencies = ["M012-E003", "M012-E004", "GCP owner access", "Production DNS au
 considerations = "Block truthfully when owner credentials or cutover authority are unavailable. Never replace live evidence with a local emulator claim."
 
 estimated_stories = 2
+
+[execution]
+blocked = 2026-08-21
+failure_reason = "Implementation, static infrastructure, and local gates are ready; live EU proof and production cutover require reauthenticated GCP owner access and an explicitly approved DNS window."

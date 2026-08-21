@@ -1,7 +1,7 @@
 id = "M012-E005-S002"
 parent = "M012-E005"
 title = "Cut production collection to GCP"
-status = "ready"
+status = "blocked"
 triage = "plan"
 created = 2026-08-21
 
@@ -28,3 +28,8 @@ depends_on = ["M012-E005-S001"]
 [handoff]
 implementation_hints = "Never change production DNS without explicit owner approval in the active session."
 reference_files = ["docs/hosting/migration-runbook.md"]
+
+[execution]
+blocked = 2026-08-21
+failure_reason = "Depends on blocked live proof M012-E005-S001, and production DNS/cutover approval has not been given for an active window. Render resources are already de-provisioned; committed Render files remain historical/fallback until the GCP soak passes."
+evidence = "docs/operations/gcp-runbook.md defines the preflight, cutover, rollback, soak, and gated retirement procedure."

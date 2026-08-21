@@ -3,7 +3,7 @@
 
 id = "M012"
 title = "GCP-native Cloud Run and Pub/Sub production runtime"
-status = "ready"
+status = "blocked"
 created = 2026-08-21
 
 [outcome]
@@ -21,6 +21,10 @@ user_progress = "From 'the BigQuery path works but accepted events can disappear
 
 [execution]
 mode = "implementation"
+blocked = 2026-08-21
+failure_reason = "Request-scoped Pub/Sub code, Cloud Run modes, keyless OpenTofu/WIF infrastructure, monitoring, cost and operations documentation, and all credential-free gates are complete. Live EU provisioning, retry/DLQ/outage/replacement evidence, teardown, and production cutover are blocked because the configured GCP owner account requires interactive reauthentication and no DNS cutover window is approved."
+evidence = "See docs/operations/gcp-proof.md and product/stories/M012-E005-S001-live-gcp-proof.toml."
+
 
 [scope]
 in_scope = [
