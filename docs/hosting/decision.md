@@ -1,6 +1,6 @@
 # Hosting decision: Render Starter in Frankfurt
 
-- **Status:** selected for disposable proof; production use is not yet approved
+- **Status:** validated by disposable Free proof; paid Starter smoke test and production cutover approval remain
 - **Date:** 2026-08-20
 - **Mission:** M008
 

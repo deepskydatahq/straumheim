@@ -1,7 +1,7 @@
 id = "M008-E002"
 parent = "M008"
 title = "Managed hosting proof and failure drills"
-status = "blocked"
+status = "complete"
 created = 2026-08-20
 depends_on = ["M008-E001"]
 
@@ -31,5 +31,5 @@ considerations = """Do not use production traffic or perform DNS cutover. Block 
 estimated_stories = 3
 
 [execution]
-blocked = 2026-08-20
-failure_reason = "Proof assets and live collection are complete. Recovery, deployment gating, graceful shutdown, and rollback were observed; only operator confirmation of notification receipt remains before S003 and this epic can complete."
+completed = 2026-08-21
+evidence = "A disposable Frankfurt Free service validated HTTPS collection, centralized delivery logs, failed-candidate isolation, automatic health recovery, graceful drain, rollback, cold start, and operator email notification. The service was deleted after evidence capture."

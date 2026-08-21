@@ -3,7 +3,7 @@
 
 id = "M008"
 title = "Select and prove zero-ops managed hosting for Straumheim"
-status = "blocked"
+status = "complete"
 created = 2026-08-20
 
 [outcome]
@@ -20,9 +20,8 @@ user_progress = "From 'an unmonitored Hetzner VM that depends on manual maintena
 
 [execution]
 mode = "implementation"
-blocked = 2026-08-20
-failure_reason = "Research, decision, deployment assets, live collection, health-gated deployment failure, automatic restart, graceful drain, rollback, migration runbook, and reliability follow-ups are complete. Final completion is blocked only on operator confirmation that Render failure/unhealthy email notification was received."
-evidence = "See docs/hosting/proof-results.md, docs/hosting/mission-judgment.md, and product/stories/M008-E002-S003-failure-drills.toml."
+completed = 2026-08-21
+evidence = "All fourteen mission criteria pass. Render was selected from official evidence; a disposable Frankfurt service validated collection, health-gated deploys, automatic restart, graceful drain, rollback, cold start, centralized logs, and operator email notification; migration and reliability follow-ups are documented. See docs/hosting/mission-judgment.md."
 
 [scope]
 in_scope = [

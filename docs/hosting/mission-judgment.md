@@ -2,7 +2,7 @@
 
 Judgment date: 2026-08-21
 
-Result: **blocked — 13 criteria pass, 1 awaits operator notification confirmation**
+Result: **complete — all 14 criteria pass**
 
 A live Frankfurt Free service validated Render's platform behavior without adding payment information. The committed production recommendation remains Starter; Free cannot validate the explicit 30-second shutdown-delay setting and spins down when idle.
 
@@ -16,7 +16,7 @@ A live Frankfurt Free service validated Render's platform behavior without addin
 | 6 | Synthetic HTTPS event reaches non-production sink | Pass | Event ID `01a022aa-5a3f-7cd3-a634-2120dcad8e72` matched the stdout record in Render logs |
 | 7 | Unhealthy candidate does not replace healthy deploy | Pass | Candidate `763c988` failed after the health window while the previous revision stayed HTTP 200 and accepted a new event |
 | 8 | Unhealthy/stopped instance automatically recovers | Pass | Delayed failure produced 503, traffic removal/502, SIGTERM, replacement, then 200 without SSH |
-| 9 | Central logs and tested failure notification | **Blocked** | Central logs passed; Render generated unhealthy/update-failed platform events, but operator must confirm default email receipt |
+| 9 | Central logs and tested failure notification | Pass | Central logs captured delivery and lifecycle evidence; the operator confirmed receipt of Render's failure email |
 | 10 | No recurring manual uptime check | Pass | `requirements.md` definition and alert-driven operations in `migration-runbook.md` |
 | 11 | Restart/shutdown and event-loss implications | Pass | Logs show shutdown signal, pipeline flush, and completion; proof records a roughly 52-second single-instance interruption and memory-loss caveat |
 | 12 | Cloud Run background CPU/billing addressed | Pass | `platform-comparison.md` calculates the safe always-active cost and rejects request-based CPU for the current goroutine model |
@@ -44,6 +44,6 @@ A live Frankfurt Free service validated Render's platform behavior without addin
 - `deploy/render/config.proof.example.yaml`
 - M009 and M010 draft missions
 
-## Unblock condition
+## Completion
 
-Confirm whether Render failure/unhealthy notification email reached `timo@partnerwithpropel.com`. If received, complete M008-E002-S003, E002, and M008. A paid Starter smoke test remains recommended before production cutover but is not required to validate the shared health/deploy/rollback mechanisms.
+The operator confirmed notification receipt. The disposable service and temporary proof branches were deleted, and the workspace has no remaining Render services. A paid Starter smoke test remains recommended before production cutover but is not required to validate the shared health, deployment, rollback, logging, and notification mechanisms.

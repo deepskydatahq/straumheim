@@ -1,6 +1,6 @@
 # Render proof results
 
-- **Status:** live free-tier proof passed; notification receipt and paid Starter behavior remain unconfirmed
+- **Status:** free-tier proof complete; all planned shared-platform drills passed
 - **Execution window:** 2026-08-21 04:51–05:21 UTC
 - **Service:** `srv-da3tio740ujc73cbsqg0`, `https://straumheim-proof.onrender.com`
 - **Region/plan:** Frankfurt / Free
@@ -17,7 +17,7 @@ The workspace had no payment method, so the official Blueprint correctly rejecte
 | Secret config | Pass — `config.yaml` mounted at `/etc/secrets/config.yaml` and selected with `STRAUMHEIM_CONFIG` |
 | Container build | Pass — Render BuildKit build used a 911 kB context; local context is 1.055 MB after `.dockerignore` |
 | Render Blueprint schema | Pass for committed Starter Blueprint; temporary Free variant passes only after removing the paid-only shutdown-delay field |
-| Notification destination | Pending operator confirmation — service uses workspace default failure notification setting |
+| Notification destination | Pass — operator confirmed receipt of Render's failure email at the workspace account address |
 | External database sink | Not used; stdout persisted in Render logs was the non-production proof sink |
 
 Local Docker tests also verified both supported config paths:
@@ -90,7 +90,7 @@ Rollback passed and did not require a rebuild.
 | Running health failure removes/restarts instance | Pass | 503 → traffic removal/502 → SIGTERM/drain → replacement/200 |
 | Graceful shutdown | Pass for fast proof sink | Three log sequences include shutdown, flush, and completion |
 | Rollback | Pass | Rollback trigger restored normal commit and event path |
-| Failure notification delivery | Pending | Workspace default configured; operator must confirm email receipt |
+| Failure notification delivery | Pass | Operator confirmed receipt of Render's failure email |
 | Free-tier cold start after idle | Pass with latency caveat | After more than 16 idle minutes, `/health` returned 200 in 13.297 seconds; immediate webhook delivery also passed |
 | External sink outage visibility | Not run | Requires disposable external destination credentials; M009/M010 capture the known gap |
 | Paid Starter behavior | Not run | Workspace needs payment information; committed Blueprint remains Starter |
@@ -101,8 +101,8 @@ After more than 16 minutes without public requests, a request started at `05:38:
 
 An immediate webhook with proof ID `m008-after-cold-start-20260821T053823Z` returned event ID `01a022d3-d569-7ded-9e1c-1f3c9d681839`; the matching stdout record appeared in Render logs at `05:38:23Z`. No event was lost in this observed cold-start path because Render queued the request until the container was ready. Browser beacons with shorter client lifetimes can still abandon a 13-second request. Paid Starter avoids Free's idle spin-down.
 
-## Remaining actions
+## Cleanup
 
-1. Confirm whether Render failure/unhealthy emails reached `timo@partnerwithpropel.com`.
-2. Optionally add payment information and repeat a short Starter smoke test for explicit 30-second shutdown configuration and no idle spin-down.
-3. Delete the proof service and verify no paid resources remain.
+At `2026-08-21T06:32:56Z`, service `srv-da3tio740ujc73cbsqg0` was deleted through the Render CLI. Listing workspace services returned no resources, and the former proof URL returned HTTP 404. The temporary Git proof branches and local worktrees were also deleted. No paid Render resource was created.
+
+A short Starter smoke test remains recommended before production cutover to confirm the explicit 30-second shutdown setting and absence of Free-tier idle spin-down.
