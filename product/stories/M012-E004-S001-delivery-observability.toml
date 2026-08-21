@@ -1,0 +1,30 @@
+id = "M012-E004-S001"
+parent = "M012-E004"
+title = "Add request delivery metrics and alert policies"
+status = "ready"
+triage = "plan"
+created = 2026-08-21
+
+[outcome]
+description = "Collector publish and writer delivery outcomes are measurable, and Cloud Monitoring policies detect HTTP failure, backlog age, undelivered growth, and dead letters."
+
+[acceptance_criteria]
+executable = true
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Publish/write success and failure metrics update deterministically"
+[[acceptance_criteria.criteria]]
+test = "tofu"
+description = "Alert policies cover Cloud Run 5xx, oldest unacked age, backlog, and DLQ"
+[[acceptance_criteria.criteria]]
+test = "semantics"
+description = "Liveness remains healthy during recoverable destination outages"
+
+[context]
+relevant_paths = ["internal/metrics/metrics.go", "internal/pubsub/", "infra/gcp/monitoring.tf"]
+input_fixtures = []
+depends_on = ["M012-E002-S001"]
+
+[handoff]
+implementation_hints = "Prefer provider metrics for queue state; application metrics/logs should describe request outcomes and IDs without payloads."
+reference_files = ["product/missions/M010-operational-health.toml"]

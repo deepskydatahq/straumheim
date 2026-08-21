@@ -1,0 +1,33 @@
+id = "M012-E005-S001"
+parent = "M012-E005"
+title = "Run disposable EU Cloud Run Pub/Sub proof"
+status = "ready"
+triage = "ready"
+created = 2026-08-21
+
+[outcome]
+description = "A disposable keyless EU stack proves all protocols, durable redelivery, DLQ, duplicate bounds, replacement availability, rollback, alert signals, and teardown."
+
+[acceptance_criteria]
+executable = true
+[[acceptance_criteria.criteria]]
+test = "live"
+description = "Webhook, pixel, and Snowplow IDs and JSON appear in BigQuery"
+[[acceptance_criteria.criteria]]
+test = "live"
+description = "Writer outage redelivers and terminal messages reach DLQ"
+[[acceptance_criteria.criteria]]
+test = "live"
+description = "Two warm collectors or approved equivalent survive replacement and rollback"
+[[acceptance_criteria.criteria]]
+test = "cleanup"
+description = "Proof services, topics, tables, identities, bindings, images, and state are removed"
+
+[context]
+relevant_paths = ["docs/operations/gcp-proof.md", "infra/gcp/"]
+input_fixtures = []
+depends_on = ["M012-E003-S002", "M012-E004-S002"]
+
+[handoff]
+implementation_hints = "Requires owner GCP credentials and billing; block with exact access evidence if unavailable."
+reference_files = ["docs/destinations/bigquery-proof.md"]

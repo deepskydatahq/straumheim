@@ -1,0 +1,26 @@
+id = "M012-E003"
+parent = "M012"
+title = "Reproducible GCP infrastructure and keyless IAM"
+status = "ready"
+created = 2026-08-21
+depends_on = ["M012-E002"]
+
+[outcome]
+description = "Reviewed OpenTofu provisions regional Cloud Run, Pub/Sub retry/DLQ, BigQuery, Artifact Registry, native identities, and least-privilege bindings without downloaded keys."
+
+[job_story]
+description = "When creating an environment, I want one repeatable definition, so that IAM, regions, retries, images, and teardown do not depend on console memory."
+
+[testing]
+approach = "static-validation"
+criteria = ["tofu fmt and validate pass", "IAM is resource-scoped", "Push is OIDC-authenticated", "Images deploy by digest", "Proof and production names are isolated"]
+validator_context = ["infra/gcp/", ".github/workflows/"]
+
+[context]
+relevant_paths = ["Dockerfile", ".github/workflows/release.yml", "render.yaml", "docs/hosting/"]
+dependencies = ["M012-E002", "GCP owner permissions for apply"]
+
+[notes]
+considerations = "Commit no state, credentials, tfvars, or generated plans. Provider APIs and IAM service-agent grants must be explicit."
+
+estimated_stories = 2

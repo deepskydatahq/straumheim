@@ -1,0 +1,26 @@
+id = "M012-E004"
+parent = "M012"
+title = "Delivery health, alerts, cost, and migration operations"
+status = "ready"
+created = 2026-08-21
+depends_on = ["M012-E002"]
+
+[outcome]
+description = "Operators receive actionable Cloud Monitoring signals for collection and delivery, understand cost and failure semantics, and can execute or roll back a keyless GCP cutover without routine checks."
+
+[job_story]
+description = "When the queue or destination degrades, I want alerts and a tested runbook, so that failures are acted on before retention or DLQ limits are reached."
+
+[testing]
+approach = "unit-and-doc-validation"
+criteria = ["Metrics cover publish/write outcomes", "Alert policies cover HTTP errors, backlog age, and DLQ", "Cost assumptions are explicit", "Cutover and rollback are executable"]
+validator_context = ["internal/metrics/", "infra/gcp/", "docs/operations/", "docs/hosting/"]
+
+[context]
+relevant_paths = ["internal/metrics/metrics.go", "docs/hosting/migration-runbook.md", "product/missions/M010-operational-health.toml"]
+dependencies = ["M012-E002"]
+
+[notes]
+considerations = "Keep liveness separate from recoverable delivery degradation; Pub/Sub backlog must not cause restart loops."
+
+estimated_stories = 2

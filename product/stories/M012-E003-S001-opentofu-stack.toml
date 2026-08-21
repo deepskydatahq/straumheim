@@ -1,0 +1,33 @@
+id = "M012-E003-S001"
+parent = "M012-E003"
+title = "Provision Cloud Run Pub/Sub and keyless IAM"
+status = "ready"
+triage = "plan"
+created = 2026-08-21
+
+[outcome]
+description = "An OpenTofu module provisions APIs, Artifact Registry, topic/retry/DLQ subscriptions, collector/writer Cloud Run services, BigQuery resources, and least-privilege native identities."
+
+[acceptance_criteria]
+executable = true
+[[acceptance_criteria.criteria]]
+test = "tofu"
+description = "tofu fmt and validate pass without credentials"
+[[acceptance_criteria.criteria]]
+test = "iam"
+description = "Collector only publishes, writer only writes dataset, and push identity only invokes writer"
+[[acceptance_criteria.criteria]]
+test = "configuration"
+description = "EU region, retention, bounded retry/DLQ, scaling, and digest image variables are explicit"
+[[acceptance_criteria.criteria]]
+test = "security"
+description = "State, tfvars, keys, and secrets are ignored and absent"
+
+[context]
+relevant_paths = ["infra/gcp/", ".gitignore"]
+input_fixtures = []
+depends_on = ["M012-E002-S001"]
+
+[handoff]
+implementation_hints = "Use google_cloud_run_v2_service and authenticated push OIDC. Make project/region/image digest inputs."
+reference_files = ["product/missions/M012-gcp-native-runtime.toml"]

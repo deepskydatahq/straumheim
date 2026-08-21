@@ -1,0 +1,30 @@
+id = "M012-E003-S002"
+parent = "M012-E003"
+title = "Define immutable Artifact Registry delivery"
+status = "ready"
+triage = "plan"
+created = 2026-08-21
+
+[outcome]
+description = "A documented and automatable workflow publishes the tested image to Artifact Registry, resolves its digest, applies infrastructure, and supports revision rollback without static GCP keys."
+
+[acceptance_criteria]
+executable = true
+[[acceptance_criteria.criteria]]
+test = "workflow"
+description = "CI uses GitHub OIDC workload identity and no JSON key"
+[[acceptance_criteria.criteria]]
+test = "deployment"
+description = "OpenTofu receives an immutable sha256 image reference"
+[[acceptance_criteria.criteria]]
+test = "docs"
+description = "Bootstrap, apply, rollback, and teardown commands are explicit"
+
+[context]
+relevant_paths = [".github/workflows/gcp-deploy.yml", "infra/gcp/README.md"]
+input_fixtures = []
+depends_on = ["M012-E003-S001"]
+
+[handoff]
+implementation_hints = "Keep deployment workflow manually gated until live proof and production environment approvals exist."
+reference_files = [".github/workflows/release.yml"]

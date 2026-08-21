@@ -1,0 +1,30 @@
+id = "M012-E005-S002"
+parent = "M012-E005"
+title = "Cut production collection to GCP"
+status = "ready"
+triage = "plan"
+created = 2026-08-21
+
+[outcome]
+description = "Production uses the proven keyless Cloud Run and Pub/Sub path, completes its soak, retires the former host and obsolete Render template, and records owners and rollback outcome."
+
+[acceptance_criteria]
+executable = true
+[[acceptance_criteria.criteria]]
+test = "live"
+description = "Custom-domain canaries for every enabled input match BigQuery"
+[[acceptance_criteria.criteria]]
+test = "operations"
+description = "Alerts and rollback are confirmed before DNS and during soak"
+[[acceptance_criteria.criteria]]
+test = "cleanup"
+description = "After soak, prior host resources and Render production template are retired deliberately"
+
+[context]
+relevant_paths = ["docs/operations/gcp-runbook.md", "render.yaml", "docs/hosting/migration-runbook.md"]
+input_fixtures = []
+depends_on = ["M012-E005-S001"]
+
+[handoff]
+implementation_hints = "Never change production DNS without explicit owner approval in the active session."
+reference_files = ["docs/hosting/migration-runbook.md"]

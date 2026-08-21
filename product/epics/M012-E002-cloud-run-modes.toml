@@ -1,0 +1,26 @@
+id = "M012-E002"
+parent = "M012"
+title = "Cloud Run collector and writer modes"
+status = "ready"
+created = 2026-08-21
+depends_on = ["M012-E001"]
+
+[outcome]
+description = "The same immutable image starts explicitly as a public collector or private writer, with role-specific configuration, health behavior, and no post-request correctness dependency."
+
+[job_story]
+description = "When deploying Straumheim to Cloud Run, I want explicit role modes, so that collector and writer can scale and receive least-privilege identities independently."
+
+[testing]
+approach = "unit-and-integration-test"
+criteria = ["Mode validation fails closed", "Collector initializes Pub/Sub only", "Writer initializes BigQuery only", "Request-level integration tests cover both roles"]
+validator_context = ["cmd/straumheim/", "internal/config/", "config.example.yaml"]
+
+[context]
+relevant_paths = ["cmd/straumheim/main.go", "internal/config/config.go", "internal/input/", "internal/pubsub/"]
+dependencies = ["M012-E001"]
+
+[notes]
+considerations = "Use configuration rather than separate binaries so self-hosted defaults and one image remain intact."
+
+estimated_stories = 2

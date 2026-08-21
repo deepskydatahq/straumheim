@@ -1,0 +1,30 @@
+id = "M012-E002-S002"
+parent = "M012-E002"
+title = "Prove collector-to-writer request semantics"
+status = "ready"
+triage = "ready"
+created = 2026-08-21
+
+[outcome]
+description = "Credential-free integration tests prove input success waits for publish and push success waits for sink delivery across webhook, pixel, and Snowplow paths."
+
+[acceptance_criteria]
+executable = true
+[[acceptance_criteria.criteria]]
+test = "integration"
+description = "All enabled protocols preserve IDs through serialized Record messages"
+[[acceptance_criteria.criteria]]
+test = "integration"
+description = "Publisher and sink failures yield HTTP failures without false acknowledgement"
+[[acceptance_criteria.criteria]]
+test = "race"
+description = "Concurrent request tests pass under the race detector"
+
+[context]
+relevant_paths = ["cmd/straumheim/", "internal/input/", "internal/pubsub/"]
+input_fixtures = []
+depends_on = ["M012-E002-S001"]
+
+[handoff]
+implementation_hints = "Use in-memory publisher/sink adapters; do not require the Pub/Sub emulator for core CI."
+reference_files = ["internal/input/webhook_test.go", "internal/input/snowplow_test.go", "internal/input/pixel_test.go"]

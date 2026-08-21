@@ -1,0 +1,30 @@
+id = "M012-E001-S003"
+parent = "M012-E001"
+title = "Implement Pub/Sub push BigQuery writer"
+status = "ready"
+triage = "ready"
+created = 2026-08-21
+
+[outcome]
+description = "A request-scoped handler decodes Pub/Sub push envelopes and returns success only after the configured sink confirms the Record write."
+
+[acceptance_criteria]
+executable = true
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Valid base64 Record envelopes write once and return 204"
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Malformed envelopes return non-2xx with structured error evidence so bounded attempts end in the DLQ"
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Sink failures return 500 so Pub/Sub retries and IDs are unchanged"
+
+[context]
+relevant_paths = ["internal/pubsub/push.go", "internal/sink/sink.go", "internal/record/record.go"]
+input_fixtures = []
+depends_on = ["M012-E001-S001"]
+
+[handoff]
+implementation_hints = "Separate envelope decoding from HTTP; Cloud Run IAM rejects unauthenticated requests before the handler."
+reference_files = ["internal/sink/bigquery.go"]

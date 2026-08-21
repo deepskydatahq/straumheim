@@ -1,0 +1,30 @@
+id = "M012-E001-S002"
+parent = "M012-E001"
+title = "Implement confirmed Pub/Sub publisher pipeline"
+status = "ready"
+triage = "ready"
+created = 2026-08-21
+
+[outcome]
+description = "A Pipeline implementation serializes canonical Records, publishes them with ID/protocol attributes, and returns only after every publish result is confirmed."
+
+[acceptance_criteria]
+executable = true
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Confirmed publish preserves the Record ID and JSON contract"
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Any publish failure is wrapped and returned to the input request"
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Close flushes/stops the publisher client without background correctness work"
+
+[context]
+relevant_paths = ["internal/pubsub/publisher.go", "internal/pipeline/pipeline.go", "internal/record/record.go"]
+input_fixtures = []
+depends_on = ["M012-E001-S001"]
+
+[handoff]
+implementation_hints = "Hide the Google client behind a publish-result interface and wait synchronously in Ingest."
+reference_files = ["product/missions/M012-gcp-native-runtime.toml"]

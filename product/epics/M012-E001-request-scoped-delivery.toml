@@ -1,0 +1,31 @@
+id = "M012-E001"
+parent = "M012"
+title = "Request-scoped Pub/Sub delivery contracts"
+status = "ready"
+created = 2026-08-21
+depends_on = []
+
+[outcome]
+description = "Collector requests publish canonical Records durably before success, while authenticated push requests write to BigQuery before Pub/Sub acknowledgement without correctness-critical background work."
+
+[job_story]
+description = "When an event is accepted, I want request-scoped durable handoffs, so that process replacement cannot lose an acknowledged event."
+
+[testing]
+approach = "unit-and-integration-test"
+criteria = [
+  "Collector success follows confirmed publish and preserves Record IDs",
+  "Publish failures propagate to input HTTP failures",
+  "Push decoding and BigQuery acknowledgement semantics are deterministic",
+  "Malformed and failed push deliveries return retry/dead-letter-compatible statuses",
+]
+validator_context = ["internal/pipeline/", "internal/pubsub/", "internal/sink/bigquery.go"]
+
+[context]
+relevant_paths = ["internal/pipeline/pipeline.go", "internal/input/", "internal/record/record.go", "internal/sink/bigquery.go"]
+dependencies = []
+
+[notes]
+considerations = "Keep the default memory pipeline unchanged. Add a GCP profile behind small interfaces and fake all network boundaries in unit tests."
+
+estimated_stories = 3

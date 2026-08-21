@@ -1,0 +1,33 @@
+id = "M012-E002-S001"
+parent = "M012-E002"
+title = "Wire collector and writer runtime modes"
+status = "ready"
+triage = "plan"
+created = 2026-08-21
+
+[outcome]
+description = "Configuration selects default, collector, or writer mode and initializes only role-required clients and routes."
+
+[acceptance_criteria]
+executable = true
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Unknown modes and missing topic/destination fields fail closed"
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Collector registers inputs with confirmed publisher and no sinks/buffer"
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Writer exposes health and push route with only BigQuery initialized"
+[[acceptance_criteria.criteria]]
+test = "compatibility"
+description = "Empty/default mode retains the existing self-hosted memory pipeline"
+
+[context]
+relevant_paths = ["cmd/straumheim/main.go", "internal/config/config.go", "config.example.yaml"]
+input_fixtures = []
+depends_on = ["M012-E001-S002", "M012-E001-S003"]
+
+[handoff]
+implementation_hints = "Refactor composition into testable constructors before adding mode branches."
+reference_files = ["cmd/straumheim/main_test.go"]

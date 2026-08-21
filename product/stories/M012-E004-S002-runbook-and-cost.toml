@@ -1,0 +1,30 @@
+id = "M012-E004-S002"
+parent = "M012-E004"
+title = "Document GCP operations cost and cutover"
+status = "ready"
+triage = "plan"
+created = 2026-08-21
+
+[outcome]
+description = "An alert-driven runbook records ownership, costs, SLO thresholds, IAM review, DNS cutover, rollback, soak, and retirement of obsolete Render configuration."
+
+[acceptance_criteria]
+executable = true
+[[acceptance_criteria.criteria]]
+test = "docs"
+description = "Cost model states included services, low-volume assumptions, and budget alerts"
+[[acceptance_criteria.criteria]]
+test = "docs"
+description = "Runbook covers alerts, backlog recovery, DLQ handling, rollback, DNS, and seven-day soak"
+[[acceptance_criteria.criteria]]
+test = "docs"
+description = "Render configuration retirement is gated on successful Cloud Run cutover"
+
+[context]
+relevant_paths = ["docs/operations/gcp-runbook.md", "docs/hosting/decision.md", "docs/hosting/migration-runbook.md"]
+input_fixtures = []
+depends_on = ["M012-E003-S001", "M012-E004-S001"]
+
+[handoff]
+implementation_hints = "Keep costs formula-based and link official calculators/pricing rather than promising a fixed bill."
+reference_files = ["docs/hosting/migration-runbook.md"]

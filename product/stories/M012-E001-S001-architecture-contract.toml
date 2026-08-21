@@ -1,0 +1,34 @@
+id = "M012-E001-S001"
+parent = "M012-E001"
+title = "Document request-scoped GCP delivery contract"
+status = "complete"
+triage = "plan"
+created = 2026-08-21
+
+[outcome]
+description = "An implementation-ready decision defines collector publish acknowledgement, push/write acknowledgement, retry, malformed-message, duplicate, and self-hosted compatibility semantics."
+
+[acceptance_criteria]
+executable = true
+[[acceptance_criteria.criteria]]
+test = "docs"
+description = "Architecture specifies each acknowledgement boundary and failure response"
+[[acceptance_criteria.criteria]]
+test = "docs"
+description = "Default self-hosted memory pipeline remains supported"
+[[acceptance_criteria.criteria]]
+test = "docs"
+description = "IAM, duplicate, batching, and Cloud Run CPU assumptions are explicit"
+
+[context]
+relevant_paths = ["docs/architecture/", "product/missions/M012-gcp-native-runtime.toml", "internal/pipeline/"]
+input_fixtures = []
+depends_on = []
+
+[handoff]
+implementation_hints = "Choose push delivery and request-bound writes; avoid pull loops and post-response work."
+reference_files = ["docs/destinations/bigquery.md", "docs/hosting/decision.md"]
+
+[execution]
+completed = 2026-08-21
+evidence = "docs/architecture/gcp-request-scoped-delivery.md defines confirmed collector and writer acknowledgement boundaries, retry/DLQ and duplicate semantics, keyless IAM, prohibited post-response work, and self-hosted compatibility."
