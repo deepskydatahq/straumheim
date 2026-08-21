@@ -16,9 +16,9 @@ Result: **blocked — 11 criteria pass, 3 require live external evidence**
 | 8 | No credentials committed/logged | Pass | Config/examples contain only ADC path and destination placeholders; secret-pattern scan clean |
 | 9 | Tests require no live GCP project | Pass | Metadata/writer factories and fakes cover sink behavior |
 | 10 | Go quality gates | Pass | gofmt, `go test ./...`, `go test -race ./...`, `go build ./...`, and `go vet ./...`; Docker scratch build passes |
-| 11 | HTTPS event matches BigQuery row | **Blocked** | Requires approved GCP project/dataset and paid Render proof service |
-| 12 | Live batch and duplicate semantics | **Blocked** | Unit batch behavior passes; query/duplicate evidence requires live table |
-| 13 | Proof resources removed | **Blocked** | No resources were created, but criterion applies after successful proof |
+| 11 | HTTPS event matches BigQuery row | **Blocked** | Local HTTP-to-BigQuery match passed for 12 rows; Render create returned HTTP 402 |
+| 12 | Live batch and duplicate semantics | **Blocked** | Local live batch passed with 12 rows; controlled duplicate/query evidence remains |
+| 13 | Proof resources removed | **Blocked** | BigQuery `events` and the proof service-account key remain active for resumed Render proof |
 | 14 | Decision and Cloud Storage boundary documented | Pass | `docs/destinations/bigquery.md` selects direct default-stream delivery and reserves GCS for archive/replay |
 
 ## Implemented artifacts
@@ -35,7 +35,7 @@ Result: **blocked — 11 criteria pass, 3 require live external evidence**
 
 ## Unblock condition
 
-1. Reauthenticate the approved GCP account.
-2. Explicitly approve a project for a disposable EU dataset/service account/key.
-3. Add Render payment information for the two Starter instances.
-4. Execute M011-E003-S002, capture non-secret query/failure/duplicate evidence, remove all resources, and repeat this judgment.
+1. Add Render payment information for the two Starter instances.
+2. Re-run the already prepared service-create command with the supplied secret files.
+3. Capture public HTTPS/two-instance and controlled duplicate evidence.
+4. Delete the Render service, BigQuery proof table/dataset as approved, service-account key/account, and local key; then repeat this judgment.

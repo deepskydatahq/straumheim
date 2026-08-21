@@ -31,4 +31,4 @@ estimated_stories = 2
 
 [execution]
 blocked = 2026-08-21
-failure_reason = "Deployment documentation/configuration are complete; live proof awaits approved GCP project access and paid two-instance Render access."
+failure_reason = "Local delivery to the approved EU BigQuery dataset passed with twelve verified rows; Render rejected the two-Instance Starter request with HTTP 402 until payment information is added."

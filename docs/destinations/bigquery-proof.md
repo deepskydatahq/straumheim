@@ -1,7 +1,7 @@
 # Render-to-BigQuery proof
 
-- **Status:** blocked before provisioning
-- **Last access check:** 2026-08-21
+- **Status:** local GCP integration passed; Render deployment blocked by billing
+- **Last access/proof check:** 2026-08-21
 - **Target:** two Render Starter instances in Frankfurt → EU BigQuery dataset
 
 ## Current blockers
@@ -11,12 +11,26 @@
 | Sink implementation and unit tests | Ready |
 | Render CLI authentication | Available |
 | Render Starter billing/payment | Blocked — prior workspace had no payment information; two paid instances cannot be created |
-| GCP user session | Blocked — configured account requires interactive reauthentication |
-| Approved GCP proof project | Unconfirmed — local config names `propel-data-hub`, but M011 must not create resources there without explicit approval |
-| BigQuery CLI (`bq`) | Missing locally; install the Google Cloud CLI BigQuery component or use API/console |
-| EU proof dataset/service account | Not created |
+| GCP credentials | Available — user supplied a dataset-scoped service-account JSON; local mode was tightened to `0600` |
+| Approved GCP proof project | Available — user explicitly approved `propel-data-hub` and `straumheim_test` |
+| BigQuery CLI (`bq`) | Missing locally; proof used authenticated BigQuery REST metadata/table-data endpoints |
+| EU proof dataset/table | Available — existing EU dataset `straumheim_test`; sink created `events` |
 
-No BigQuery dataset, table, service account, key, or Render proof service has been created for M011. No live result is claimed.
+The Render create request returned HTTP 402 before creating a service. The BigQuery table and service-account key remain active for a resumed Render proof; they must be deleted after the final run.
+
+## Observed local GCP integration
+
+A credentialed build from commit `6f0dcfa` ran locally against the production BigQuery APIs at 2026-08-21 09:44–09:46 UTC:
+
+- `BigQuerySink.Init` read dataset metadata, confirmed location `EU`, and created `propel-data-hub.straumheim_test.events`.
+- Table metadata reported DAY partitioning on `timestamp` and clustering by `protocol, source`.
+- Twelve HTTP webhook events were accepted and all twelve rows became visible through BigQuery `tabledata.list`.
+- Returned IDs matched stored IDs, including first ID `01a02347-c39b-72e0-8e99-12d74187a037` and last ID `01a02347-c39d-7751-877f-c4eb3f0e9a5a`.
+- For proof IDs `m011-local-20260821-00` through `-11`, nested `payload.nested.count` and `flattened.nested_count` both matched values 0 through 11.
+- Starting with configured location `US` failed before serving traffic with: `dataset location "EU" does not match configured location "US"`.
+- The runtime service account needed no query-job role; metadata and row verification used its dataset-scoped permissions.
+
+This validates GCP authentication, table creation, stable metadata, batching through the running pipeline, JSON values, and actionable initialization errors. It does **not** substitute for the required public Render HTTPS/two-instance evidence.
 
 ## Proof procedure
 
@@ -102,10 +116,10 @@ Replace `blocked` only with observed facts:
 
 | Criterion | Status | Evidence |
 |---|---|---|
-| Two Render Starter instances healthy | Blocked | Requires payment information |
-| HTTPS event ID matches BigQuery row | Blocked | Requires approved GCP project and credentials |
-| Payload and flattened JSON query correctly | Blocked | Requires live table |
-| Multi-record batch visible | Blocked | Requires live pipeline |
-| Duplicate semantics bounded | Blocked | Requires controlled live duplicate |
-| Failure is actionable and secret-safe | Blocked | Requires disposable permission/config drill |
-| All proof resources removed | Pass so far | None were created during access check |
+| Two Render Starter instances healthy | Blocked | Render create returned HTTP 402; no service was created |
+| HTTPS event ID matches BigQuery row | Blocked | Local HTTP ID/row match passed; public Render HTTPS remains |
+| Payload and flattened JSON query correctly | Pass locally | Twelve nested/flattened values matched through BigQuery REST |
+| Multi-record batch visible | Pass locally | Twelve rapidly submitted records appeared in the table |
+| Duplicate semantics bounded | Blocked | Requires controlled live duplicate/query evidence |
+| Failure is actionable and secret-safe | Pass locally | Wrong-location initialization failed clearly; secret scan was clean |
+| All proof resources removed | Blocked | `events` table and proof service-account key remain for resumed proof |
