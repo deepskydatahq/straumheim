@@ -66,7 +66,7 @@ After billing was enabled, the intended Frankfurt topology passed:
 - Empty dataset `propel-data-hub.straumheim_test`: deletion returned HTTP 403 because the runtime account correctly lacks `bigquery.datasets.delete`.
 - Cloud key `fd00afac12905a5e67885c2aced5241f640b5db1`: deletion returned permission denied because the runtime account correctly lacks `iam.serviceAccountKeys.delete`.
 
-An owner must delete the cloud key (or the whole proof service account) and the empty dataset before cleanup passes. No private-key copy remains in the worktree, local Downloads directory, temporary gcloud config, or Render workspace.
+An owner must delete the cloud key (or the whole proof service account) and the empty dataset before cleanup passes. The unauthenticated Google service-account certificate endpoint still listed key `fd00afac12905a5e67885c2aced5241f640b5db1` during the final 2026-08-21 check, so revocation cannot be inferred from local deletion. No private-key copy remains in the worktree, local Downloads directory, temporary gcloud config, or Render workspace.
 
 ## Proof procedure
 

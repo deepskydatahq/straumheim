@@ -1,0 +1,165 @@
+# Mission: GCP-Native Durable Runtime
+# Move collection and delivery to request-scoped Cloud Run services with Pub/Sub durability
+
+id = "M012"
+title = "GCP-native Cloud Run and Pub/Sub production runtime"
+status = "ready"
+created = 2026-08-21
+
+[outcome]
+description = """
+Straumheim runs entirely on managed Google Cloud services: a public Cloud Run
+collector durably accepts canonical Records into Pub/Sub before acknowledging the
+client, and a private Cloud Run writer delivers those Records to BigQuery before
+acknowledging Pub/Sub. Native service identities replace JSON keys, retries and a
+dead-letter topic bound delivery failures, Cloud Monitoring provides actionable
+alerts, and reproducible infrastructure plus a tested cutover runbook make the setup
+production-ready without Render or a manually maintained host.
+"""
+
+user_progress = "From 'the BigQuery path works but accepted events can disappear with an in-memory Render process' to 'one GCP-native, keyless, durable, observable production path survives runtime and destination failures'"
+
+[execution]
+mode = "implementation"
+
+[scope]
+in_scope = [
+    "Record the architecture shift from Render direct delivery to GCP-native Cloud Run, Pub/Sub, and BigQuery, including the changed assumptions that invalidate the M008 runtime preference",
+    "Run the public collector as a request-scoped Cloud Run service that normalizes events, publishes the canonical Record to Pub/Sub, and returns success only after publish confirmation",
+    "Run a separately deployable private Cloud Run writer that accepts authenticated Pub/Sub push envelopes and returns success only after the BigQuery Storage Write append result succeeds",
+    "Preserve Record ID end to end as the at-least-once deduplication key",
+    "Configure Pub/Sub message retention, bounded retry/backoff, a dead-letter topic/subscription, and explicit handling for malformed or permanently failing records",
+    "Use two warm collector instances initially, or document evidence for a lower Cloud Run minimum that preserves the accepted latency and availability target; allow the writer to scale independently",
+    "Eliminate correctness-critical background work so Cloud Run request-based execution remains safe",
+    "Create least-privilege native service accounts for collector publishing, authenticated push invocation, and BigQuery writing without downloaded JSON keys",
+    "Provision Cloud Run, Pub/Sub, BigQuery bindings, Artifact Registry, configuration, and alerting through reproducible infrastructure-as-code or an equivalently idempotent reviewed deployment definition",
+    "Build and publish immutable container images and deploy by digest with health-gated revisions and rollback",
+    "Expose stable liveness and delivery signals and configure Cloud Monitoring alerts for Cloud Run errors, Pub/Sub backlog/oldest age, dead-letter growth, and BigQuery delivery failure",
+    "Prove public HTTPS collection, durable acceptance, BigQuery delivery, redelivery after writer failure, dead-letter behavior, instance replacement, and rollback in an EU non-production environment",
+    "Measure expected low-volume Cloud Run, Pub/Sub, Artifact Registry, logging, and BigQuery costs and configure budgets",
+    "Document production custom-domain/DNS cutover, rollback to the existing collector, soak, credential/IAM review, and retirement of obsolete Render deployment configuration",
+]
+out_of_scope = [
+    "Self-managed Kafka, Redis, NATS, Kubernetes, VMs, or queue hosts",
+    "Using Pub/Sub as a mandatory dependency for Straumheim's default self-hosted single-binary mode",
+    "Exactly-once delivery or coordinated BigQuery committed-stream offsets",
+    "Historical replay beyond the configured Pub/Sub retention window",
+    "Replacing BigQuery as the selected production analytics destination",
+    "A hosted user-facing operations dashboard",
+    "Global multi-region active-active collection",
+]
+
+[testing]
+approach = "unit-integration-and-live-proof"
+criteria = [
+    "Every accepted HTTP event has a confirmed Pub/Sub message with the same Record ID before the collector returns success",
+    "Publish failure or timeout returns a non-success response and never falsely acknowledges durable acceptance",
+    "The private writer rejects unauthenticated callers and accepts the configured Pub/Sub push identity",
+    "The writer acknowledges Pub/Sub only after BigQuery confirms the append result",
+    "A forced writer or BigQuery outage leaves messages queued and later delivers them without operator replay",
+    "Retry backoff is bounded and a permanent failure reaches the dead-letter topic with enough context for operator action",
+    "Duplicate delivery preserves one Record ID and documented BigQuery deduplication returns one analytical record",
+    "Collector and writer run correctly without correctness-critical work after their HTTP requests finish",
+    "Runtime identities have only the documented publisher, invoker, subscriber/service-agent, and dataset writer permissions; no service-account JSON exists",
+    "Infrastructure provisioning is repeatable, region-explicit, secret-safe, and deploys immutable images",
+    "Two warm collector instances or the approved equivalent pass replacement and availability checks while the writer scales independently",
+    "Cloud Monitoring receives actionable backlog, age, dead-letter, HTTP error, and delivery-failure signals without routine manual checks",
+    "A live EU proof sends each enabled protocol through Cloud Run and verifies matching IDs and JSON in BigQuery",
+    "Rollback and teardown remove proof resources without deleting production-owned data",
+    "gofmt, go test ./..., go test -race ./..., go build ./..., infrastructure validation, and container build pass",
+]
+validator_context = [
+    "cmd/straumheim/",
+    "internal/input/",
+    "internal/pipeline/",
+    "internal/sink/bigquery.go",
+    "internal/metrics/",
+    "config.example.yaml",
+    "Dockerfile",
+    ".github/workflows/",
+    "infra/gcp/",
+    "docs/operations/",
+    "docs/hosting/",
+]
+
+[context]
+relevant_paths = [
+    "cmd/straumheim/main.go",
+    "internal/input/webhook.go",
+    "internal/input/pixel.go",
+    "internal/pipeline/engine.go",
+    "internal/buffer/memory.go",
+    "internal/sink/bigquery.go",
+    "internal/metrics/metrics.go",
+    "render.yaml",
+    "docs/destinations/bigquery.md",
+    "docs/destinations/bigquery-proof.md",
+    "docs/hosting/decision.md",
+    "docs/hosting/migration-runbook.md",
+    "product/missions/M008-zero-ops-hosting.toml",
+    "product/missions/M009-durable-delivery.toml",
+    "product/missions/M010-operational-health.toml",
+    "product/missions/M011-bigquery-destination.toml",
+]
+dependencies = [
+    "Owner deletion or explicit retention decision for the M011 proof service-account key and empty dataset",
+    "An approved GCP project with billing, Cloud Run, Pub/Sub, BigQuery, Artifact Registry, IAM, Secret Manager, and Monitoring APIs available",
+    "Permission to create least-privilege service accounts, IAM bindings, budgets, and an EU proof environment",
+    "Ownership of the production collector domain and authority to execute or roll back DNS cutover",
+]
+
+[notes]
+considerations = """
+This is an optional GCP-native deployment profile, not a reversal of Straumheim's
+single-binary self-hosted product promise. Memory buffering and direct sinks remain
+valid for best-effort Docker/VM users. The managed profile composes owned open-source
+Straumheim containers with GCP services when a team explicitly chooses cloud-native
+durability and horizontal operation.
+
+The M008 Render decision was correct for the old background-flush architecture:
+always-available CPU made the in-memory pipeline predictable. Pub/Sub changes that
+premise. Collector correctness ends at confirmed publish, writer correctness stays
+inside the authenticated push request, and failed push requests remain durable in
+Pub/Sub. Cloud Run request-based execution is therefore appropriate without paying
+for idle background CPU solely to flush memory.
+
+Prefer two Cloud Run services even if they use the same image with different modes:
+- collector identity can only publish to the canonical topic;
+- writer identity can write only the selected BigQuery dataset;
+- Pub/Sub push identity can only invoke the private writer;
+- independent concurrency, min/max instances, timeout, and rollout settings prevent
+  public collection load from coupling directly to warehouse delivery.
+
+The collector must return its generated Record ID only after Pub/Sub Publish confirms.
+The writer must decode the standard push envelope, validate message/Record shape, and
+return 2xx only after BigQuery AppendResult succeeds. A crash or non-2xx response
+causes redelivery. The default BigQuery stream remains at-least-once, so duplicates
+are expected and Record ID remains the downstream deduplication key.
+
+Start with push delivery because it is natively request-scoped for Cloud Run. Do not
+introduce a pull loop or cross-request in-memory batch whose correctness depends on
+CPU after a request. Measure one-message Storage Write appends at expected volume;
+optimize only with a request-bound batching design that keeps Pub/Sub messages
+unacknowledged until their shared append completes.
+
+Coordinate with M009 and M010 rather than silently claiming they are complete. M012
+implements the GCP production profile for durable acceptance/retry and hosted health;
+M009 can still provide a portable embedded durability option later, and M010 can
+retain platform-neutral health semantics.
+
+Initial official references to revalidate during breakdown and implementation:
+- Cloud Run authenticated Pub/Sub tutorial:
+  https://cloud.google.com/run/docs/tutorials/pubsub
+- Authenticated push subscriptions:
+  https://cloud.google.com/pubsub/docs/authenticate-push-subscriptions
+- Push subscription creation and response semantics:
+  https://cloud.google.com/pubsub/docs/create-push-subscription
+- Pub/Sub retry and dead-letter handling:
+  https://cloud.google.com/pubsub/docs/subscription-retry-policy
+  https://cloud.google.com/pubsub/docs/dead-letter-topics
+- Cloud Run billing and minimum instances:
+  https://cloud.google.com/run/docs/configuring/billing-settings
+  https://cloud.google.com/run/docs/configuring/min-instances
+- Cloud Run service identity and least privilege:
+  https://cloud.google.com/run/docs/securing/service-identity
+"""
