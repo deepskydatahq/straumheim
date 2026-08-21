@@ -31,4 +31,4 @@ estimated_stories = 2
 
 [execution]
 blocked = 2026-08-21
-failure_reason = "Public one-instance Render Free delivery passed with twelve verified BigQuery rows, but the required two-instance Starter request returned HTTP 402 until payment information is added; final GCP cleanup follows the paid proof."
+failure_reason = "The full two-instance Starter proof passed and Render/table/local credentials are removed. Completion awaits owner deletion of the empty proof dataset and cloud service-account key/account, which the runtime account cannot perform by design."

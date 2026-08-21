@@ -2,7 +2,7 @@
 
 Judgment date: 2026-08-21
 
-Result: **blocked — 13 testing criteria pass, cleanup remains; the two-instance mission outcome also requires Render billing**
+Result: **blocked — all functional and two-instance checks pass; one owner-level cleanup criterion remains**
 
 | # | Mission criterion | Result | Evidence |
 |---:|---|---|---|
@@ -16,9 +16,9 @@ Result: **blocked — 13 testing criteria pass, cleanup remains; the two-instanc
 | 8 | No credentials committed/logged | Pass | Config/examples contain only ADC path and destination placeholders; secret-pattern scan clean |
 | 9 | Tests require no live GCP project | Pass | Metadata/writer factories and fakes cover sink behavior |
 | 10 | Go quality gates | Pass | gofmt, `go test ./...`, `go test -race ./...`, `go build ./...`, and `go vet ./...`; Docker scratch build passes |
-| 11 | HTTPS event matches BigQuery row | Pass | Twelve public Render Free HTTPS IDs matched twelve BigQuery rows and JSON values |
-| 12 | Live batch and duplicate semantics | Pass | Twelve-event public batch passed; a controlled ID produced two raw rows, bounded by documented ID deduplication |
-| 13 | Proof resources removed | **Blocked** | Free Render service/secrets are deleted; BigQuery `events` and proof key remain for the resumed two-instance proof |
+| 11 | HTTPS event matches BigQuery row | Pass | Twenty two-instance Starter HTTPS IDs matched twenty BigQuery rows and JSON values |
+| 12 | Live batch and duplicate semantics | Pass | Twenty-event Starter batch passed; a controlled ID produced two raw rows, bounded by documented ID deduplication |
+| 13 | Proof resources removed | **Blocked** | Render/table/local key removed; owner must delete the empty dataset and cloud IAM key/account |
 | 14 | Decision and Cloud Storage boundary documented | Pass | `docs/destinations/bigquery.md` selects direct default-stream delivery and reserves GCS for archive/replay |
 
 ## Implemented artifacts
@@ -35,7 +35,6 @@ Result: **blocked — 13 testing criteria pass, cleanup remains; the two-instanc
 
 ## Unblock condition
 
-1. Add Render payment information for the two Starter instances.
-2. Re-run the already prepared service-create command with the supplied secret files.
-3. Capture two-instance healthy-peer evidence; public HTTPS, batch, JSON, duplicate, and shutdown behavior already pass on Free.
-4. Delete the Render service, BigQuery proof table/dataset as approved, service-account key/account, and local key; then repeat this judgment.
+1. As a project/IAM owner, delete cloud key `fd00afac12905a5e67885c2aced5241f640b5db1` or the entire proof service account `render-com-straumheim@propel-data-hub.iam.gserviceaccount.com`.
+2. Delete the now-empty dataset `propel-data-hub.straumheim_test`.
+3. Confirm both actions, mark M011-E003-S002 and its parents complete, and repeat this judgment.

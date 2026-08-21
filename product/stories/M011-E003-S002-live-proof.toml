@@ -38,5 +38,5 @@ reference_files = ["product/missions/M011-bigquery-destination.toml"]
 
 [execution]
 blocked = 2026-08-21
-failure_reason = "Public one-instance Render Free delivery passed, but Render rejected the required two-instance Starter create request with HTTP 402 because the workspace has no payment information. Healthy-peer evidence and final BigQuery/key cleanup remain blocked."
-evidence = "docs/destinations/bigquery-proof.md records twelve matching public HTTPS/BigQuery rows, JSON and batch behavior, controlled at-least-once duplicates, clean shutdown after the EOF fix, deleted Render resources, the Starter 402 response, and remaining active GCP proof resources."
+failure_reason = "All functional and two-instance acceptance checks pass. Final cleanup is blocked only because the least-privilege runtime account cannot delete the empty dataset or revoke its own cloud IAM key; an owner must perform those two actions."
+evidence = "docs/destinations/bigquery-proof.md records twenty matching Starter HTTPS/BigQuery rows, two instances, 120/120 health checks during replacement, JSON/batch/duplicate semantics, clean shutdown, deleted Render service/table/local key, and the two owner-level cleanup denials."

@@ -1,6 +1,6 @@
 # Render-to-BigQuery proof
 
-- **Status:** public Free-tier Render-to-BigQuery proof passed; two-Instance Starter proof blocked by billing
+- **Status:** two-instance Starter Render-to-BigQuery proof passed; owner-level GCP cleanup pending
 - **Last access/proof check:** 2026-08-21
 - **Target:** two Render Starter instances in Frankfurt → EU BigQuery dataset
 
@@ -10,13 +10,13 @@
 |---|---|
 | Sink implementation and unit tests | Ready |
 | Render CLI authentication | Available |
-| Render Starter billing/payment | Blocked — create returned HTTP 402; a one-instance Free proof was run and deleted instead |
-| GCP credentials | Available — user supplied a dataset-scoped service-account JSON; local mode was tightened to `0600` |
+| Render Starter billing/payment | Available — two Frankfurt Starter instances were created, tested, and deleted |
+| GCP credentials | Local/Render copies removed — cloud key revocation requires owner IAM permission |
 | Approved GCP proof project | Available — user explicitly approved `propel-data-hub` and `straumheim_test` |
 | BigQuery CLI (`bq`) | Missing locally; proof used authenticated BigQuery REST metadata/table-data endpoints |
-| EU proof dataset/table | Available — existing EU dataset `straumheim_test`; sink created `events` |
+| EU proof dataset/table | Table deleted — empty dataset deletion requires owner BigQuery permission |
 
-The two-instance Starter create request returned HTTP 402 before creating a service. A one-instance Free service was then created for partial public proof and deleted afterward. The BigQuery table and service-account key remain active for a resumed paid proof; they must be deleted after the final run.
+The initial two-instance request returned HTTP 402, then succeeded after billing was added. Both the Free and Starter Render services were deleted. The BigQuery table and local key were removed; deletion of the now-empty dataset and cloud service-account key requires the owner permission that the runtime account intentionally lacks.
 
 ## Observed local GCP integration
 
@@ -44,7 +44,29 @@ A one-instance Frankfurt Free service provided public-path evidence while preser
 - The first live deploy exposed that `ManagedStream.Close` returns `io.EOF` on a normal close. Commit `58900a9` normalized that documented behavior, added a regression test, and passed all Go gates. A Render restart then logged `flushing pipeline` followed by `shutdown complete` with no error.
 - Render service and uploaded secret files were deleted. The former URL returns HTTP 404 and `render services` returns no services.
 
-This passes the public HTTPS, BigQuery row/JSON, batch, duplicate-bound, and graceful-close checks. It does **not** prove healthy-peer availability on the required two Starter instances.
+This passes the public HTTPS, BigQuery row/JSON, batch, duplicate-bound, and graceful-close checks.
+
+## Observed two-instance Starter proof
+
+After billing was enabled, the intended Frankfurt topology passed:
+
+- Service `srv-da40el8ae00c739dcgfg`, deployment `dep-da40em0ae00c739dci40`, commit `9dec7cd`, plan Starter, `numInstances=2`.
+- Render listed initial instances `...-fqkgz` and `...-th6rg`; both independently logged successful sink initialization and server startup.
+- Twenty public HTTPS webhook requests returned HTTP 200 and IDs from `01a0235f-8f89-7d62-ab93-926545b9c5e6` through `01a0235f-9499-7aa4-b5b9-55ed745144c6`.
+- BigQuery exposed all twenty matching IDs and proof tags `m011-render-starter-20260821-00` through `-19`; nested payload and flattened values matched 0 through 19.
+- During a service restart, a 60-second monitor made 120 health requests at 500 ms intervals. All 120 returned HTTP 200; maximum latency was 121 ms.
+- Render replaced the instances with `...-9fzhb` and `...-xv6qr`, and both replacements logged successful startup. This demonstrates healthy-peer availability during replacement.
+- The Starter service and uploaded secret files were deleted. Render lists no services and the former URL returns HTTP 404.
+
+## Cleanup result
+
+- Render proof service/secrets: deleted.
+- BigQuery `events` table: deleted; subsequent table listing was empty.
+- Local service-account JSON: securely removed with `shred`; temporary gcloud credential/config files were removed.
+- Empty dataset `propel-data-hub.straumheim_test`: deletion returned HTTP 403 because the runtime account correctly lacks `bigquery.datasets.delete`.
+- Cloud key `fd00afac12905a5e67885c2aced5241f640b5db1`: deletion returned permission denied because the runtime account correctly lacks `iam.serviceAccountKeys.delete`.
+
+An owner must delete the cloud key (or the whole proof service account) and the empty dataset before cleanup passes. No private-key copy remains in the worktree, local Downloads directory, temporary gcloud config, or Render workspace.
 
 ## Proof procedure
 
@@ -130,10 +152,10 @@ Replace `blocked` only with observed facts:
 
 | Criterion | Status | Evidence |
 |---|---|---|
-| Two Render Starter instances healthy | Blocked | Starter create returned HTTP 402; Free proved only one instance |
+| Two Render Starter instances healthy | Pass | Two instances started; replacement produced 120/120 health responses with no outage |
 | HTTPS event ID matches BigQuery row | Pass | Twelve public Render HTTPS IDs matched twelve BigQuery rows |
 | Payload and flattened JSON query correctly | Pass | Twelve nested/flattened values matched through BigQuery REST |
 | Multi-record batch visible | Pass | Twelve rapidly submitted HTTPS records appeared in the table |
 | Duplicate semantics bounded | Pass | Controlled ID produced two raw rows; docs deduplicate by ID |
 | Failure is actionable and secret-safe | Pass | Wrong-location initialization failed clearly; secret scan was clean |
-| All proof resources removed | Blocked | Render service is deleted; `events` and proof service-account key remain for resumed paid proof |
+| All proof resources removed | Blocked | Render/table/local key removed; owner must delete empty dataset and cloud IAM key/account |
