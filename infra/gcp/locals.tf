@@ -6,11 +6,16 @@ locals {
     "artifactregistry.googleapis.com",
     "bigquery.googleapis.com",
     "bigquerystorage.googleapis.com",
+    "billingbudgets.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
     "iam.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "logging.googleapis.com",
     "monitoring.googleapis.com",
     "pubsub.googleapis.com",
     "run.googleapis.com",
     "secretmanager.googleapis.com",
+    "serviceusage.googleapis.com",
   ])
 
   labels = {
