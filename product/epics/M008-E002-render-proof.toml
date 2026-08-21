@@ -32,4 +32,4 @@ estimated_stories = 3
 
 [execution]
 blocked = 2026-08-20
-failure_reason = "Proof assets are complete, but live Render workspace, billing, logs, and notification access are unavailable; stories S002 and S003 remain blocked."
+failure_reason = "Proof assets and live collection are complete. Recovery, deployment gating, graceful shutdown, and rollback were observed; only operator confirmation of notification receipt remains before S003 and this epic can complete."

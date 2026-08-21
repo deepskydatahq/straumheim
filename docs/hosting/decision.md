@@ -52,7 +52,7 @@ The public GHCR image remains the portable distribution artifact. If production 
 - `/health` currently says only that the process responds; it does not test destinations.
 - Render restart or deploy can discard records held in the in-memory buffer.
 - Failed sink writes are logged and counted but not retried.
-- A single Starter instance can have a short availability gap while Render replaces an unhealthy instance.
+- A single Starter instance can have an availability gap while Render replaces an unhealthy instance. The one-instance Free proof observed approximately 52 seconds of HTTP 502 during automatic replacement; Starter uses the same one-instance topology unless scaled.
 - Render’s platform automation does not make accepted events durable.
 
 These are application roadmap items captured in M009 and M010, not reasons to retain a VM.

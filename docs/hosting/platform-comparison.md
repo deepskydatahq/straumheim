@@ -45,7 +45,7 @@ Mandatory failures override weighted score.
 - A Git-backed Docker service is preferable to `:latest`: each deploy is tied to a commit/build artifact, automatic deployment can wait for CI, and rollback can reuse the artifact. A registry-backed alternative must use a digest and an explicit deploy hook because Render does not watch tag changes.
 - The one-time secret-file upload is acceptable setup, not recurring maintenance. Secret values must never enter `render.yaml`.
 - `/health` only proves process liveness today. Render can recover a wedged process, but cannot detect a failed sink while that endpoint remains 200.
-- A Starter instance is single-instance. Health recovery can include a short interruption while replacement starts; zero event loss is not promised.
+- A Starter instance is single-instance. The one-instance Free proof observed approximately 52 seconds of HTTP 502 during automatic replacement; Starter uses the same one-instance topology unless scaled. Zero event loss is not promised.
 
 ## Google Cloud Run
 

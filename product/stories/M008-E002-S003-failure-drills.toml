@@ -38,5 +38,5 @@ reference_files = ["docs/hosting/proof-plan.md"]
 
 [execution]
 blocked = 2026-08-20
-failure_reason = "Depends on blocked live deployment M008-E002-S002 and requires a Render service plus email/Slack notification access."
-evidence = "docs/hosting/proof-plan.md defines each drill and docs/hosting/proof-results.md records that none were executed."
+failure_reason = "Health-gated failed deployment, running-instance restart, graceful drain, and rollback passed on a disposable Frankfurt Free service. Completion is blocked only on operator confirmation that Render's unhealthy/update-failed email notification reached the account inbox."
+evidence = "docs/hosting/proof-results.md records exact deployment IDs, timestamps, a roughly 52-second single-instance recovery interruption, graceful shutdown logs, rollback, and post-failure events."

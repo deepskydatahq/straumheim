@@ -1,7 +1,7 @@
 id = "M008-E002-S002"
 parent = "M008-E002"
 title = "Run live Render collection proof"
-status = "blocked"
+status = "complete"
 triage = "ready"
 created = 2026-08-20
 
@@ -33,6 +33,5 @@ implementation_hints = "Requires a Render account/workspace. Never commit servic
 reference_files = ["docs/hosting/proof-plan.md"]
 
 [execution]
-blocked = 2026-08-20
-failure_reason = "No authenticated Render workspace, API token/CLI session, disposable Starter billing access, or notification destination is available. Live deployment evidence cannot be produced without external access."
-evidence = "docs/hosting/proof-results.md records the access checks without claiming a deployment."
+completed = 2026-08-21
+evidence = "A disposable Free service in Frankfurt built commit d6a16cd, passed managed HTTPS health, returned webhook event ID 01a022aa-5a3f-7cd3-a634-2120dcad8e72, and persisted the matching event in Render logs. docs/hosting/proof-results.md records timestamps and limitations."
