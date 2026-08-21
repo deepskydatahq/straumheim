@@ -11,10 +11,11 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/straumheim ./cmd/straumheim
 # Stage 2: Runtime
 FROM scratch
 
+ENV STRAUMHEIM_CONFIG=/etc/straumheim/config.yaml
+
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /bin/straumheim /bin/straumheim
 
 EXPOSE 8080
 
 ENTRYPOINT ["/bin/straumheim"]
-CMD ["-config", "/etc/straumheim/config.yaml"]

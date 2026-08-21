@@ -49,7 +49,7 @@ If any prerequisite is false, stop. Do not interpret this runbook as approval to
 Confirm:
 
 - `server.host` is `0.0.0.0` and port is `8080`;
-- `PORT=8080` and Docker command override `-config /etc/secrets/config.yaml` (with the image entrypoint unchanged);
+- `PORT=8080` and `STRAUMHEIM_CONFIG=/etc/secrets/config.yaml`;
 - CORS origins and Snowplow cookie domain match the intended collector domain;
 - no local file sink is enabled;
 - destination TLS, database/table, credentials, and timeouts are correct;

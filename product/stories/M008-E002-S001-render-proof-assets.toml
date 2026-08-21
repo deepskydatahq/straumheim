@@ -38,4 +38,4 @@ reference_files = ["docs/hosting/decision.md"]
 
 [execution]
 completed = 2026-08-20
-evidence = "render.yaml validates against https://render.com/schema/render.yaml.json; the Docker image builds with a 1.055 MB context; local container /health and webhook-to-stdout proof passed using deploy/render/config.proof.example.yaml; docs/hosting/proof-plan.md defines the live drills."
+evidence = "render.yaml validates against the official schema; Docker builds with a 1.055 MB context; both the default /etc/straumheim/config.yaml mount and Render STRAUMHEIM_CONFIG=/etc/secrets/config.yaml override pass local health checks. A temporary free-tier variant also validates after omitting the paid-only shutdown-delay field."

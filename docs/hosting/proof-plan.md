@@ -24,7 +24,7 @@ Estimated proof cost is prorated from $7/month; delete the service after evidenc
    - shutdown delay: 30 seconds
    - auto-deploy: after CI checks pass
    - `PORT=8080`
-   - Docker command override: `-config /etc/secrets/config.yaml` (the image entrypoint remains `/bin/straumheim`)
+   - `STRAUMHEIM_CONFIG=/etc/secrets/config.yaml` (overrides the image default `/etc/straumheim/config.yaml`)
 3. Add a Render **secret file** named `config.yaml` with the contents of `deploy/render/config.proof.example.yaml`. Render mounts it at `/etc/secrets/config.yaml`. Do not add destination credentials for this proof.
 4. Configure workspace/service notifications to **Only failure notifications** for email and optionally Slack.
 5. Apply the Blueprint. Record service ID, region, deployed commit and build/deploy event timestamps in `proof-results.md`.

@@ -10,7 +10,8 @@ services:
     numInstances: 1
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    dockerCommand: -config /etc/secrets/config.yaml
     envVars:
       - key: PORT
         value: "8080"
+      - key: STRAUMHEIM_CONFIG
+        value: /etc/secrets/config.yaml

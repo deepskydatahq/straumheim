@@ -12,7 +12,7 @@ Use a **Render web service on the Starter plan in Frankfurt**, deployed as a Git
 - `healthCheckPath: /health` for candidate gating and continuous process recovery;
 - one Starter instance (512 MB, 0.5 CPU) with no persistent disk;
 - `maxShutdownDelaySeconds: 30`, matching Straumheim’s 10-second HTTP shutdown budget with platform margin;
-- Docker command override `-config /etc/secrets/config.yaml` (passed to the image entrypoint) and a Render-managed `config.yaml` secret file;
+- `STRAUMHEIM_CONFIG=/etc/secrets/config.yaml` and a Render-managed `config.yaml` secret file;
 - platform HTTPS and, after proof, a custom collector domain;
 - failure notifications by email and optionally Slack;
 - stdout as proof sink, persisted in Render logs; production uses an external Postgres/ClickHouse sink.
