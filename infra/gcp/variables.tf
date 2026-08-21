@@ -28,9 +28,9 @@ variable "image" {
 }
 
 variable "dataset_id" {
-  description = "BigQuery dataset ID."
+  description = "Optional BigQuery dataset ID; defaults to an environment-isolated name."
   type        = string
-  default     = "straumheim"
+  default     = ""
 }
 
 variable "dataset_location" {

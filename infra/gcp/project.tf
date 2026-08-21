@@ -21,7 +21,7 @@ resource "google_artifact_registry_repository" "images" {
 }
 
 resource "google_bigquery_dataset" "events" {
-  dataset_id                 = var.dataset_id
+  dataset_id                 = local.dataset_id
   friendly_name              = "Straumheim ${var.environment} events"
   location                   = var.dataset_location
   delete_contents_on_destroy = var.delete_proof_data_on_destroy

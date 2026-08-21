@@ -1,5 +1,6 @@
 locals {
-  prefix = "straumheim-${var.environment}"
+  prefix     = "straumheim-${var.environment}"
+  dataset_id = var.dataset_id == "" ? "straumheim_${replace(var.environment, "-", "_")}" : var.dataset_id
 
   required_services = toset([
     "artifactregistry.googleapis.com",

@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	gcppubsub "cloud.google.com/go/pubsub/v2"
@@ -87,19 +88,21 @@ func (p *PublisherPipeline) Ingest(ctx context.Context, records []record.Record)
 			"protocol":  r.Protocol,
 		})
 		if result == nil {
-			p.observePublish(r.Protocol, resultFailure)
-			return fmt.Errorf("pubsub publisher: publish record %q returned no result", r.ID)
+			result = immediatePublishResult{err: fmt.Errorf("publish returned no result")}
 		}
 		pending = append(pending, pendingPublish{recordID: r.ID, result: result})
 	}
+	var confirmationErrors []error
 	for i, publish := range pending {
 		if _, err := publish.result.Get(ctx); err != nil {
 			p.observePublish(records[i].Protocol, resultFailure)
-			return fmt.Errorf("pubsub publisher: confirm record %q: %w", publish.recordID, err)
+			confirmationErrors = append(confirmationErrors,
+				fmt.Errorf("pubsub publisher: confirm record %q: %w", publish.recordID, err))
+			continue
 		}
 		p.observePublish(records[i].Protocol, resultSuccess)
 	}
-	return nil
+	return errors.Join(confirmationErrors...)
 }
 
 // Close stops the topic publisher and closes the Pub/Sub client.
@@ -115,6 +118,10 @@ func (p *PublisherPipeline) observePublish(protocol, result string) {
 		p.observer.RecordPubSubPublish(protocol, result)
 	}
 }
+
+type immediatePublishResult struct{ err error }
+
+func (r immediatePublishResult) Get(context.Context) (string, error) { return "", r.err }
 
 type googleMessagePublisher struct {
 	publisher *gcppubsub.Publisher

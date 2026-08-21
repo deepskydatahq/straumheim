@@ -11,11 +11,15 @@ import (
 )
 
 type fakePublishResult struct {
-	id  string
-	err error
+	id     string
+	err    error
+	called bool
 }
 
-func (r *fakePublishResult) Get(context.Context) (string, error) { return r.id, r.err }
+func (r *fakePublishResult) Get(context.Context) (string, error) {
+	r.called = true
+	return r.id, r.err
+}
 
 type publishedMessage struct {
 	data       []byte
@@ -111,6 +115,21 @@ func TestPublisherPipelineIngestErrors(t *testing.T) {
 		err := pipeline.Ingest(context.Background(), []record.Record{testRecord("event-1")})
 		if !errors.Is(err, wantErr) || !strings.Contains(err.Error(), `confirm record "event-1"`) {
 			t.Fatalf("Ingest() error = %v, want wrapped %v", err, wantErr)
+		}
+	})
+
+	t.Run("waits for all results after failure", func(t *testing.T) {
+		wantErr := errors.New("first failed")
+		first := &fakePublishResult{err: wantErr}
+		second := &fakePublishResult{id: "second"}
+		publisher := &fakeMessagePublisher{results: []PublishResult{first, second}}
+		pipeline := NewPublisherPipeline(publisher, nil)
+		err := pipeline.Ingest(context.Background(), []record.Record{testRecord("event-1"), testRecord("event-2")})
+		if !errors.Is(err, wantErr) {
+			t.Fatalf("Ingest() error = %v, want wrapped %v", err, wantErr)
+		}
+		if !first.called || !second.called {
+			t.Fatalf("result calls: first=%t second=%t, want both", first.called, second.called)
 		}
 	})
 
