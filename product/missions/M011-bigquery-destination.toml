@@ -1,0 +1,148 @@
+# Mission: BigQuery Destination
+# Deliver Render-hosted Straumheim events directly into queryable BigQuery tables
+
+id = "M011"
+title = "Direct BigQuery sink with JSON payloads and Render proof"
+status = "ready"
+created = 2026-08-21
+
+[outcome]
+description = """
+Straumheim running on two Render instances delivers event batches directly into a
+BigQuery table through the BigQuery Storage Write API. Events become queryable with
+low latency, retain their original and flattened JSON payloads without per-field DDL,
+and authenticate through a least-privilege Google service account mounted as a
+Render secret. A live non-production proof verifies the complete HTTPS-to-BigQuery
+path and documents at-least-once delivery semantics.
+"""
+
+user_progress = "From 'Render can collect events but only proof them in logs' to 'events land automatically in a durable, queryable BigQuery destination'"
+
+[execution]
+mode = "implementation"
+
+[scope]
+in_scope = [
+    "Document and confirm direct BigQuery as the primary destination instead of Cloud Storage file staging for the small, low-latency tracking setup",
+    "Implement a BigQuery sink using the BigQuery Storage Write API default stream",
+    "Use a stable table schema for Record core fields plus native JSON payload and flattened JSON columns",
+    "Create the configured table when absent while requiring the dataset and its location to exist explicitly",
+    "Batch records into append requests and preserve Record ID as the deduplication key",
+    "Define at-least-once behavior, retry boundaries, partial/row error handling, and duplicate-query guidance",
+    "Authenticate with Google Application Default Credentials and a least-privilege service-account JSON file mounted through Render secrets",
+    "Add YAML configuration for project, dataset, table, location, and optional writer tuning",
+    "Wire type=bigquery into createSinks and update example/proof configuration",
+    "Add unit tests around schema mapping, batching, configuration, initialization, append errors, and cleanup using small interfaces/fakes",
+    "Run a live proof from the two-instance Render topology into a disposable BigQuery dataset/table",
+    "Document IAM roles, Render secret setup, BigQuery SQL validation, operating cost assumptions, duplicate handling, and teardown",
+]
+out_of_scope = [
+    "Using Cloud Storage as the primary delivery path",
+    "Parquet generation, object rotation, external tables, scheduled load jobs, or a GCS archive sink",
+    "Exactly-once committed streams or cross-instance stream-offset coordination",
+    "Automatic dataset creation or organization-level IAM provisioning",
+    "Historical backfill or replay",
+    "Durable local buffering and dead-letter queues (M009)",
+    "A hosted dashboard or transformation/modeling layer",
+]
+
+[testing]
+approach = "unit-and-live-integration"
+criteria = [
+    "var _ Sink = (*BigQuerySink)(nil) compiles",
+    "Init validates project/dataset/table/location and creates the table with the documented stable schema when absent",
+    "Write appends one batch through the Storage Write API default stream rather than issuing one request per record",
+    "Core Record values map deterministically and payload/flattened values remain queryable BigQuery JSON",
+    "Empty writes are no-ops and transient/permanent append failures return wrapped actionable errors",
+    "The implementation closes writer/client resources cleanly",
+    "Config supports type=bigquery with project, dataset, table, location, and ADC-based authentication",
+    "No service-account JSON or other credential is committed to Git or emitted in logs",
+    "Unit tests use fakes/interfaces and do not require a live GCP project",
+    "go test ./... and go build ./... pass",
+    "A synthetic event sent to the Render HTTPS webhook appears in the disposable BigQuery table with the same Record ID and JSON payload",
+    "A batch containing multiple records is visible in BigQuery and duplicate semantics are demonstrated or explicitly bounded",
+    "Proof resources and temporary credentials are removed after evidence capture",
+    "Documentation explains why direct BigQuery was chosen and when a future Cloud Storage archive sink would be preferable",
+]
+
+validator_context = [
+    "internal/sink/bigquery.go",
+    "internal/sink/bigquery_test.go",
+    "internal/config/config.go",
+    "internal/config/config_test.go",
+    "cmd/straumheim/main.go",
+    "config.example.yaml",
+    "render.yaml",
+    "docs/destinations/bigquery.md",
+    "docs/destinations/bigquery-proof.md",
+]
+
+[context]
+relevant_paths = [
+    "internal/sink/sink.go",
+    "internal/sink/clickhouse.go",
+    "internal/sink/postgres.go",
+    "internal/config/config.go",
+    "cmd/straumheim/main.go",
+    "config.example.yaml",
+    "deploy/render/",
+    "docs/hosting/decision.md",
+    "product/missions/M009-durable-delivery.toml",
+    "product/missions/M010-operational-health.toml",
+]
+dependencies = [
+    "A GCP project with BigQuery billing enabled",
+    "A disposable BigQuery dataset in an EU location compatible with the intended data residency",
+    "A least-privilege service account allowed to create/write the proof table",
+    "Render billing for the two-instance Starter topology before the live proof",
+]
+
+[notes]
+considerations = """
+Direct BigQuery is the recommended primary path for this small tracking setup:
+- events are queryable with low latency and no scheduled load pipeline;
+- the Storage Write API is Google's recommended ingestion path for new projects;
+- the default stream supports continuous at-least-once appends without coordinating
+  committed-stream offsets between two Render instances;
+- stable core columns plus BigQuery JSON payloads avoid dynamic ALTER TABLE work for
+  every tracking property;
+- Application Default Credentials work with a Render-mounted service-account file.
+
+Cloud Storage remains valuable later as a cheap immutable archive/replay source, but
+it is not the simplest primary analytics destination. GCS JSONL/Parquet would require
+object rotation, small-file control, schema/load or external-table management, and
+would delay query availability. Capture that as a separate future mission if archive
+and replay become priorities.
+
+Reliability boundary: the Storage Write API can retry transport operations, but the
+current in-memory buffer can still lose acknowledged records if an instance dies.
+Do not claim exactly-once delivery. Use Record ID for downstream deduplication and
+complete M009 for durable acceptance/retry guarantees.
+
+Initial official references (revalidate during execution):
+- Storage Write API overview and stream semantics:
+  https://cloud.google.com/bigquery/docs/write-api
+- Go managed writer and gRPC guidance:
+  https://cloud.google.com/bigquery/docs/write-api-streaming
+- BigQuery JSON data type:
+  https://cloud.google.com/bigquery/docs/json-data
+- Application Default Credentials:
+  https://cloud.google.com/docs/authentication/application-default-credentials
+- Loading newline-delimited JSON from Cloud Storage (rejected primary alternative):
+  https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-json
+
+Recommended table shape:
+- id STRING NOT NULL
+- timestamp TIMESTAMP NOT NULL
+- received_at TIMESTAMP
+- device_time TIMESTAMP
+- protocol/source/schema/vendor/schema_version STRING
+- is_valid BOOL
+- ip/user_agent/referer STRING
+- payload JSON
+- flattened JSON
+
+Partition by DATE(timestamp) and cluster by protocol/source when table creation APIs
+support those options cleanly. Keep dataset creation explicit so location and billing
+choices are never inferred by the collector.
+"""
