@@ -1,7 +1,7 @@
 id = "M012-E002"
 parent = "M012"
 title = "Cloud Run collector and writer modes"
-status = "ready"
+status = "complete"
 created = 2026-08-21
 depends_on = ["M012-E001"]
 

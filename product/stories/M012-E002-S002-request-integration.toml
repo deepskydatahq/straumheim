@@ -1,7 +1,7 @@
 id = "M012-E002-S002"
 parent = "M012-E002"
 title = "Prove collector-to-writer request semantics"
-status = "ready"
+status = "complete"
 triage = "ready"
 created = 2026-08-21
 
@@ -28,3 +28,7 @@ depends_on = ["M012-E002-S001"]
 [handoff]
 implementation_hints = "Use in-memory publisher/sink adapters; do not require the Pub/Sub emulator for core CI."
 reference_files = ["internal/input/webhook_test.go", "internal/input/snowplow_test.go", "internal/input/pixel_test.go"]
+
+[execution]
+completed = 2026-08-21
+evidence = "Credential-free request integration tests register webhook, pixel, and Snowplow against PublisherPipeline, feed emitted messages through PushHandler, verify IDs/protocols, and prove publish failures return HTTP 500. Focused and full tests pass."

@@ -173,6 +173,32 @@ func TestLoadConfig_FileNotFound(t *testing.T) {
 	}
 }
 
+func TestLoadConfig_GCPRuntime(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "config.yaml")
+	data := `
+runtime:
+  mode: collector
+  pubsub:
+    project: test-project
+    topic: events
+`
+	if err := os.WriteFile(cfgPath, []byte(data), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := LoadConfig(cfgPath)
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+	if cfg.Runtime.Mode != "collector" || cfg.Runtime.PubSub.Project != "test-project" || cfg.Runtime.PubSub.Topic != "events" {
+		t.Fatalf("unexpected runtime config: %+v", cfg.Runtime)
+	}
+	if cfg.Runtime.PubSub.PushPath != "/internal/pubsub/push" {
+		t.Fatalf("push_path = %q, want default", cfg.Runtime.PubSub.PushPath)
+	}
+}
+
 func TestLoadConfig_BigQuerySink(t *testing.T) {
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "config.yaml")

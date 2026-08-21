@@ -1,7 +1,7 @@
 id = "M012-E002-S001"
 parent = "M012-E002"
 title = "Wire collector and writer runtime modes"
-status = "ready"
+status = "complete"
 triage = "plan"
 created = 2026-08-21
 
@@ -31,3 +31,7 @@ depends_on = ["M012-E001-S002", "M012-E001-S003"]
 [handoff]
 implementation_hints = "Refactor composition into testable constructors before adding mode branches."
 reference_files = ["cmd/straumheim/main_test.go"]
+
+[execution]
+completed = 2026-08-21
+evidence = "Runtime YAML selects default/collector/writer; validation fails closed, collector initializes only Pub/Sub and input routes, writer requires one BigQuery sink and exposes only health/push, and default mode remains unchanged. Focused config/router tests pass."

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -20,8 +21,29 @@ import (
 	"github.com/deepskydatahq/straumheim/internal/config"
 	"github.com/deepskydatahq/straumheim/internal/metrics"
 	"github.com/deepskydatahq/straumheim/internal/pipeline"
+	"github.com/deepskydatahq/straumheim/internal/record"
 	"github.com/deepskydatahq/straumheim/internal/sink"
 )
+
+type capturePipeline struct {
+	records []record.Record
+	err     error
+}
+
+func (p *capturePipeline) Ingest(_ context.Context, records []record.Record) error {
+	p.records = append(p.records, records...)
+	return p.err
+}
+
+type captureWriter struct {
+	records []record.Record
+	err     error
+}
+
+func (w *captureWriter) Write(_ context.Context, records []record.Record) error {
+	w.records = append(w.records, records...)
+	return w.err
+}
 
 func TestHealthHandler(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -44,6 +66,104 @@ func TestHealthHandler(t *testing.T) {
 	}
 	if body["status"] != "ok" {
 		t.Fatalf("expected status ok, got %s", body["status"])
+	}
+}
+
+func TestValidateCollectorConfig(t *testing.T) {
+	tests := []struct {
+		name string
+		cfg  config.Config
+		want string
+	}{
+		{name: "valid", cfg: config.Config{Runtime: config.RuntimeConfig{PubSub: config.PubSubConfig{Project: "p", Topic: "t"}}}},
+		{name: "project", cfg: config.Config{Runtime: config.RuntimeConfig{PubSub: config.PubSubConfig{Topic: "t"}}}, want: "project is required"},
+		{name: "topic", cfg: config.Config{Runtime: config.RuntimeConfig{PubSub: config.PubSubConfig{Project: "p"}}}, want: "topic is required"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateCollectorConfig(&tt.cfg)
+			if tt.want == "" && err != nil {
+				t.Fatalf("validateCollectorConfig() error: %v", err)
+			}
+			if tt.want != "" && (err == nil || !strings.Contains(err.Error(), tt.want)) {
+				t.Fatalf("error = %v, want containing %q", err, tt.want)
+			}
+		})
+	}
+}
+
+func TestValidateWriterConfig(t *testing.T) {
+	validSink := config.SinkConfig{Type: "bigquery"}
+	tests := []struct {
+		name string
+		cfg  config.Config
+		want string
+	}{
+		{name: "valid", cfg: config.Config{Runtime: config.RuntimeConfig{PubSub: config.PubSubConfig{PushPath: "/push"}}, Sinks: []config.SinkConfig{validSink}}},
+		{name: "path", cfg: config.Config{Runtime: config.RuntimeConfig{PubSub: config.PubSubConfig{PushPath: "push"}}, Sinks: []config.SinkConfig{validSink}}, want: "must start with /"},
+		{name: "sink count", cfg: config.Config{Runtime: config.RuntimeConfig{PubSub: config.PubSubConfig{PushPath: "/push"}}}, want: "exactly one sink"},
+		{name: "sink type", cfg: config.Config{Runtime: config.RuntimeConfig{PubSub: config.PubSubConfig{PushPath: "/push"}}, Sinks: []config.SinkConfig{{Type: "stdout"}}}, want: "bigquery sink"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateWriterConfig(&tt.cfg)
+			if tt.want == "" && err != nil {
+				t.Fatalf("validateWriterConfig() error: %v", err)
+			}
+			if tt.want != "" && (err == nil || !strings.Contains(err.Error(), tt.want)) {
+				t.Fatalf("error = %v, want containing %q", err, tt.want)
+			}
+		})
+	}
+}
+
+func TestBuildCollectorRouterUsesConfirmedPipeline(t *testing.T) {
+	publisher := &capturePipeline{}
+	cfg := &config.Config{
+		Server: config.ServerConfig{CORS: config.CORSConfig{AllowedOrigins: []string{"*"}}},
+		Inputs: map[string]config.InputConfig{"webhook": {Enabled: true}},
+	}
+	router := buildCollectorRouter(cfg, publisher)
+	request := httptest.NewRequest(http.MethodPost, "/webhook", strings.NewReader(`{"event":"signup"}`))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200: %s", response.Code, response.Body.String())
+	}
+	if len(publisher.records) != 1 || publisher.records[0].ID == "" || publisher.records[0].Payload["event"] != "signup" {
+		t.Fatalf("published records = %+v", publisher.records)
+	}
+}
+
+func TestBuildWriterRouterWritesPushRecord(t *testing.T) {
+	writer := &captureWriter{}
+	cfg := &config.Config{
+		Runtime: config.RuntimeConfig{PubSub: config.PubSubConfig{PushPath: "/internal/pubsub/push"}},
+		Server:  config.ServerConfig{CORS: config.CORSConfig{AllowedOrigins: []string{"*"}}},
+	}
+	recordJSON := `{"id":"event-1","timestamp":"2026-08-21T08:00:00Z","received_at":"2026-08-21T08:00:01Z","protocol":"webhook","payload":{"event":"signup"},"flattened":{"event":"signup"}}`
+	envelope := map[string]any{"message": map[string]any{
+		"messageId":  "message-1",
+		"data":       base64.StdEncoding.EncodeToString([]byte(recordJSON)),
+		"attributes": map[string]string{"record_id": "event-1"},
+	}}
+	body, err := json.Marshal(envelope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := httptest.NewRequest(http.MethodPost, "/internal/pubsub/push", strings.NewReader(string(body)))
+	response := httptest.NewRecorder()
+
+	buildWriterRouter(cfg, writer).ServeHTTP(response, request)
+
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want 204: %s", response.Code, response.Body.String())
+	}
+	if len(writer.records) != 1 || writer.records[0].ID != "event-1" {
+		t.Fatalf("written records = %+v", writer.records)
 	}
 }
 

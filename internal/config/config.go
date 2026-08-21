@@ -13,10 +13,24 @@ var envVarRe = regexp.MustCompile(`\$\{([^}]+)\}`)
 
 // Config is the top-level configuration struct.
 type Config struct {
-	Server ServerConfig           `yaml:"server"`
-	Inputs map[string]InputConfig `yaml:"inputs"`
-	Buffer BufferConfig           `yaml:"buffer"`
-	Sinks  []SinkConfig           `yaml:"sinks"`
+	Runtime RuntimeConfig          `yaml:"runtime"`
+	Server  ServerConfig           `yaml:"server"`
+	Inputs  map[string]InputConfig `yaml:"inputs"`
+	Buffer  BufferConfig           `yaml:"buffer"`
+	Sinks   []SinkConfig           `yaml:"sinks"`
+}
+
+// RuntimeConfig selects the default self-hosted engine or a GCP request-scoped role.
+type RuntimeConfig struct {
+	Mode   string       `yaml:"mode"`
+	PubSub PubSubConfig `yaml:"pubsub"`
+}
+
+// PubSubConfig identifies the canonical topic and private push route.
+type PubSubConfig struct {
+	Project  string `yaml:"project"`
+	Topic    string `yaml:"topic"`
+	PushPath string `yaml:"push_path"`
 }
 
 // ServerConfig holds HTTP server settings.
@@ -109,6 +123,9 @@ func substituteEnvVars(input string) string {
 }
 
 func applyDefaults(cfg *Config) {
+	if cfg.Runtime.PubSub.PushPath == "" {
+		cfg.Runtime.PubSub.PushPath = "/internal/pubsub/push"
+	}
 	if cfg.Server.Port == 0 {
 		cfg.Server.Port = 8080
 	}

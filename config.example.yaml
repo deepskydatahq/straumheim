@@ -1,6 +1,19 @@
 # Straumheim configuration
 # Environment variables can be referenced with ${VAR} syntax.
 
+# Optional GCP request-scoped profiles. Empty/default mode uses the memory buffer
+# and sinks below. Deploy the same image with one of these role configurations:
+# runtime:
+#   mode: collector # public inputs -> confirmed Pub/Sub publish
+#   pubsub:
+#     project: ${GOOGLE_CLOUD_PROJECT}
+#     topic: straumheim-events
+#
+# runtime:
+#   mode: writer # authenticated Pub/Sub push -> confirmed BigQuery append
+#   pubsub:
+#     push_path: /internal/pubsub/push
+
 server:
   host: 0.0.0.0
   port: 8080
