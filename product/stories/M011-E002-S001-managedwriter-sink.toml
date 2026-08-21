@@ -1,0 +1,41 @@
+id = "M011-E002-S001"
+parent = "M011-E002"
+title = "Implement managedwriter default-stream sink"
+status = "complete"
+triage = "plan"
+created = 2026-08-21
+
+[outcome]
+description = "Implement BigQuerySink lifecycle and one synchronous Storage Write default-stream append per pipeline batch."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "compile"
+description = "var _ Sink = (*BigQuerySink)(nil) compiles"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Empty Write is a no-op and multiple records produce exactly one append call"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Immediate append and asynchronous AppendResult errors are wrapped with BigQuery context"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Init cleanup and Close release stream and metadata clients and return joined errors"
+
+[context]
+relevant_paths = ["internal/sink/bigquery.go", "internal/sink/bigquery_test.go", "internal/sink/sink.go"]
+input_fixtures = []
+depends_on = ["M011-E001-S002"]
+
+[handoff]
+implementation_hints = "Use managedwriter.WithMultiplexing, DefaultStream, destination table, normalized descriptor, AppendRows, and AppendResult.GetResult."
+reference_files = ["docs/destinations/bigquery.md"]
+
+[execution]
+completed = 2026-08-21
+evidence = "BigQuerySink satisfies Sink, creates a multiplexed managedwriter default stream, serializes one append batch per Write, waits for AppendResult, wraps immediate/result errors, rejects use before Init, and joins cleanup errors. Focused fake-based tests pass without GCP."

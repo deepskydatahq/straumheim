@@ -1,0 +1,37 @@
+id = "M011-E001-S001"
+parent = "M011-E001"
+title = "Document destination decision and stable table schema"
+status = "complete"
+triage = "plan"
+created = 2026-08-21
+
+[outcome]
+description = "Document why direct BigQuery is primary, define table/IAM/delivery contracts, and bound the future Cloud Storage archive use case."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "document"
+description = "docs/destinations/bigquery.md explains direct BigQuery versus Cloud Storage and cites official sources"
+
+[[acceptance_criteria.criteria]]
+test = "schema"
+description = "The document defines fixed core columns, native JSON payload/flattened fields, daily timestamp partitioning, and protocol/source clustering"
+
+[[acceptance_criteria.criteria]]
+test = "semantics"
+description = "At-least-once, Record ID deduplication, M009 durability boundary, IAM, location, and credential contracts are explicit"
+
+[context]
+relevant_paths = ["docs/destinations/bigquery.md", "product/missions/M011-bigquery-destination.toml", "internal/record/record.go"]
+input_fixtures = []
+depends_on = []
+
+[handoff]
+implementation_hints = "Keep Cloud Storage as a future archive/replay option, not an undocumented rejected idea."
+reference_files = ["docs/hosting/decision.md", "VALUES.md"]
+
+[execution]
+completed = 2026-08-21
+evidence = "docs/destinations/bigquery.md selects direct Storage Write default-stream delivery, defines the fixed JSON-capable table/protobuf contract, bounds at-least-once/dedup/M009 semantics, and explains when Cloud Storage becomes appropriate."

@@ -1,0 +1,37 @@
+id = "M011-E003-S001"
+parent = "M011-E003"
+title = "Document Render and GCP destination setup"
+status = "complete"
+triage = "plan"
+created = 2026-08-21
+
+[outcome]
+description = "Provide reproducible least-privilege IAM, EU dataset, Render secret-file, config, SQL validation, cost, duplicate, and teardown instructions."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "document"
+description = "docs/destinations/bigquery.md includes exact setup and least-privilege guidance without secrets"
+
+[[acceptance_criteria.criteria]]
+test = "document"
+description = "docs/destinations/bigquery-proof.md defines synthetic/batch queries, duplicate checks, evidence, and cleanup"
+
+[[acceptance_criteria.criteria]]
+test = "security"
+description = "Render mounts credentials outside Git and configuration references GOOGLE_APPLICATION_CREDENTIALS"
+
+[context]
+relevant_paths = ["docs/destinations/bigquery.md", "docs/destinations/bigquery-proof.md", "deploy/render/", "render.yaml"]
+input_fixtures = []
+depends_on = ["M011-E002-S002"]
+
+[handoff]
+implementation_hints = "Separate dataset/table permissions from project-level API/billing setup. Never print or copy key JSON into evidence."
+reference_files = ["docs/hosting/migration-runbook.md"]
+
+[execution]
+completed = 2026-08-21
+evidence = "docs/destinations/bigquery.md documents least-privilege EU dataset/service-account setup, ADC secret mounting, JSON validation SQL, delivery/cost/dedup semantics, and teardown. bigquery-proof.md defines live, batch, failure, duplicate, evidence, and cleanup procedures; render.yaml and a credential-free config example declare only paths/placeholders."

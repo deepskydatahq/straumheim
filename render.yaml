@@ -15,3 +15,13 @@ services:
         value: "8080"
       - key: STRAUMHEIM_CONFIG
         value: /etc/secrets/config.yaml
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        value: /etc/secrets/gcp-service-account.json
+      - key: BIGQUERY_PROJECT
+        sync: false
+      - key: BIGQUERY_DATASET
+        sync: false
+      - key: BIGQUERY_TABLE
+        sync: false
+      - key: BIGQUERY_LOCATION
+        value: EU

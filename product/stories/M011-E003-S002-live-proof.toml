@@ -1,0 +1,42 @@
+id = "M011-E003-S002"
+parent = "M011-E003"
+title = "Run disposable Render-to-BigQuery proof"
+status = "blocked"
+triage = "ready"
+created = 2026-08-21
+
+[outcome]
+description = "Deploy the destination with temporary least-privilege credentials, prove synthetic and batched event queries, demonstrate duplicate bounds, and remove all proof resources."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "live"
+description = "Render HTTPS event ID and JSON payload match a row query in the EU BigQuery proof table"
+
+[[acceptance_criteria.criteria]]
+test = "live"
+description = "A multi-record batch is queryable and duplicate behavior is recorded"
+
+[[acceptance_criteria.criteria]]
+test = "cleanup"
+description = "Proof table/dataset, Render service/secret, temporary key, and service account are removed or explicitly retained with owner approval"
+
+[[acceptance_criteria.criteria]]
+test = "evidence"
+description = "docs/destinations/bigquery-proof.md records timestamps, non-secret identifiers, commands, results, and limitations"
+
+[context]
+relevant_paths = ["docs/destinations/bigquery-proof.md", "render.yaml", "deploy/render/"]
+input_fixtures = []
+depends_on = ["M011-E003-S001"]
+
+[handoff]
+implementation_hints = "Requires explicit usable GCP project/dataset and Render paid topology access. Block truthfully if external access is unavailable."
+reference_files = ["product/missions/M011-bigquery-destination.toml"]
+
+[execution]
+blocked = 2026-08-21
+failure_reason = "The configured GCP account requires interactive reauthentication, the active project propel-data-hub is not explicitly approved for disposable resources, the bq CLI is unavailable, and the Render workspace has no payment information for two Starter instances. No proof resources were created."
+evidence = "docs/destinations/bigquery-proof.md records access checks and the exact non-secret proof/cleanup procedure without claiming live delivery."

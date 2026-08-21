@@ -172,3 +172,36 @@ func TestLoadConfig_FileNotFound(t *testing.T) {
 		t.Fatal("expected error for nonexistent file")
 	}
 }
+
+func TestLoadConfig_BigQuerySink(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "config.yaml")
+	data := `
+sinks:
+  - name: warehouse
+    type: bigquery
+    project: test-project
+    dataset: analytics
+    table: events
+    location: EU
+    max_inflight_requests: 2
+`
+	if err := os.WriteFile(cfgPath, []byte(data), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := LoadConfig(cfgPath)
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+	if len(cfg.Sinks) != 1 {
+		t.Fatalf("got %d sinks, want 1", len(cfg.Sinks))
+	}
+	sink := cfg.Sinks[0]
+	if sink.Project != "test-project" || sink.Dataset != "analytics" || sink.Table != "events" || sink.Location != "EU" {
+		t.Fatalf("unexpected BigQuery destination: %+v", sink)
+	}
+	if sink.MaxInflightRequests != 2 {
+		t.Fatalf("max_inflight_requests = %d, want 2", sink.MaxInflightRequests)
+	}
+}

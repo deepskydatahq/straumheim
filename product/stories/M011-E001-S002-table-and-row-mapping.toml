@@ -1,0 +1,37 @@
+id = "M011-E001-S002"
+parent = "M011-E001"
+title = "Implement table bootstrap and protobuf row mapping"
+status = "complete"
+triage = "plan"
+created = 2026-08-21
+
+[outcome]
+description = "Implement testable BigQuery table validation/creation and deterministic Record-to-protobuf serialization for the Storage Write API."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Dataset location mismatch returns a wrapped error and missing table creation uses the documented schema, partitioning, and clustering"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Record core timestamps, nullable values, strings, bool, payload JSON, and flattened JSON map deterministically"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Invalid or unmarshalable payload values return an error that identifies the record"
+
+[context]
+relevant_paths = ["internal/sink/bigquery.go", "internal/sink/bigquery_test.go", "internal/record/record.go"]
+input_fixtures = []
+depends_on = ["M011-E001-S001"]
+
+[handoff]
+implementation_hints = "Use small metadata interfaces and dynamic protobuf descriptors so tests need no GCP project or generated code."
+reference_files = ["docs/destinations/bigquery.md"]
+
+[execution]
+completed = 2026-08-21
+evidence = "internal/sink/bigquery.go defines the JSON-capable partitioned/clustered table metadata, validates dataset location in the production admin, derives a dynamic proto2 descriptor from the BigQuery schema, and deterministically serializes nullable/core/JSON Record fields. Focused unit tests pass."

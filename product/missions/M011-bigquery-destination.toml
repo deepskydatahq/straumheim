@@ -3,7 +3,7 @@
 
 id = "M011"
 title = "Direct BigQuery sink with JSON payloads and Render proof"
-status = "ready"
+status = "blocked"
 created = 2026-08-21
 
 [outcome]
@@ -20,6 +20,9 @@ user_progress = "From 'Render can collect events but only proof them in logs' to
 
 [execution]
 mode = "implementation"
+blocked = 2026-08-21
+failure_reason = "Sink code, tests, configuration, Render/ADC setup, decision, and proof runbook are complete. Live Render-to-BigQuery delivery, batch/duplicate evidence, and cleanup are blocked pending an explicitly approved GCP project with reauthenticated credentials and payment information for two Render Starter instances."
+evidence = "See docs/destinations/m011-judgment.md and product/stories/M011-E003-S002-live-proof.toml."
 
 [scope]
 in_scope = [

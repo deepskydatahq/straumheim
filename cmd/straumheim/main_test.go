@@ -208,6 +208,68 @@ func TestRegisterInputsSnowplow(t *testing.T) {
 	engine.Close()
 }
 
+func TestCreateSinksBigQuery(t *testing.T) {
+	configs := []config.SinkConfig{
+		{
+			Name:                "warehouse",
+			Type:                "bigquery",
+			Project:             "test-project",
+			Dataset:             "analytics",
+			Table:               "events",
+			Location:            "EU",
+			MaxInflightRequests: 2,
+		},
+	}
+	sinks, err := createSinks(configs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(sinks) != 1 {
+		t.Fatalf("got %d sinks, want 1", len(sinks))
+	}
+	if sinks[0].Mode() != sink.SinkModeBatch {
+		t.Fatalf("mode = %q, want batch", sinks[0].Mode())
+	}
+}
+
+func TestCreateSinksBigQueryRequiresDestination(t *testing.T) {
+	tests := []struct {
+		name   string
+		config config.SinkConfig
+		want   string
+	}{
+		{
+			name:   "project",
+			config: config.SinkConfig{Name: "warehouse", Type: "bigquery", Dataset: "d", Table: "t", Location: "EU"},
+			want:   "requires project",
+		},
+		{
+			name:   "dataset",
+			config: config.SinkConfig{Name: "warehouse", Type: "bigquery", Project: "p", Table: "t", Location: "EU"},
+			want:   "requires dataset",
+		},
+		{
+			name:   "table",
+			config: config.SinkConfig{Name: "warehouse", Type: "bigquery", Project: "p", Dataset: "d", Location: "EU"},
+			want:   "requires table",
+		},
+		{
+			name:   "location",
+			config: config.SinkConfig{Name: "warehouse", Type: "bigquery", Project: "p", Dataset: "d", Table: "t"},
+			want:   "requires location",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := createSinks([]config.SinkConfig{tt.config})
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("createSinks() error = %v, want containing %q", err, tt.want)
+			}
+		})
+	}
+}
+
 func TestCreateSinksClickHouse(t *testing.T) {
 	configs := []config.SinkConfig{
 		{Name: "ch", Type: "clickhouse", Endpoint: "http://localhost:8123", Database: "mydb", Table: "events"},

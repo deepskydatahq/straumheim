@@ -1,0 +1,31 @@
+id = "M011-E002"
+parent = "M011"
+title = "Storage Write sink and application integration"
+status = "complete"
+created = 2026-08-21
+depends_on = ["M011-E001"]
+
+[outcome]
+description = """A production BigQuery Sink implementation appends record batches through the Storage Write API default stream, handles errors and resources, and is configurable from Straumheim YAML and createSinks."""
+
+[job_story]
+description = """When Straumheim flushes a batch, I want one managed BigQuery append with actionable failure behavior, so that events become queryable with low overhead."""
+
+[testing]
+approach = "unit-test"
+criteria = [
+    "BigQuerySink satisfies Sink and appends one request per batch",
+    "Append and initialization failures are wrapped and resources close cleanly",
+    "YAML and createSinks support a validated bigquery sink configuration",
+    "Example configuration contains no credential values",
+]
+validator_context = ["internal/sink/bigquery.go", "internal/sink/bigquery_test.go", "internal/config/", "cmd/straumheim/"]
+
+[context]
+relevant_paths = ["internal/sink/sink.go", "internal/config/config.go", "cmd/straumheim/main.go", "config.example.yaml"]
+dependencies = []
+
+[notes]
+considerations = """Default streams are at-least-once. Wait for AppendResult so pipeline errors are observable; do not invent unsafe retries around ambiguous appends."""
+
+estimated_stories = 2

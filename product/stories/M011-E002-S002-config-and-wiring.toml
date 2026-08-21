@@ -1,0 +1,37 @@
+id = "M011-E002-S002"
+parent = "M011-E002"
+title = "Wire BigQuery configuration and application startup"
+status = "complete"
+triage = "ready"
+created = 2026-08-21
+
+[outcome]
+description = "Add validated BigQuery YAML fields, createSinks support, tests, and credential-free configuration examples."
+
+[acceptance_criteria]
+executable = true
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "Config parses project, dataset, table, location, and optional writer tuning fields"
+
+[[acceptance_criteria.criteria]]
+test = "unit"
+description = "createSinks rejects missing project/dataset/table/location and constructs a BigQuery sink for valid configuration"
+
+[[acceptance_criteria.criteria]]
+test = "configuration"
+description = "config.example.yaml and Render documentation use ADC/GOOGLE_APPLICATION_CREDENTIALS without credential values"
+
+[context]
+relevant_paths = ["internal/config/config.go", "internal/config/config_test.go", "cmd/straumheim/main.go", "cmd/straumheim/main_test.go", "config.example.yaml"]
+input_fixtures = []
+depends_on = ["M011-E002-S001"]
+
+[handoff]
+implementation_hints = "Keep ADC outside SinkConfig; expose only destination identifiers and tuning."
+reference_files = ["config.prod.example.yaml"]
+
+[execution]
+completed = 2026-08-21
+evidence = "SinkConfig parses project/dataset/table/location/max_inflight_requests, createSinks validates required fields and constructs BigQuerySink, and credential-free YAML/docs use ADC. Focused config and command tests pass."

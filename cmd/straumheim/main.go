@@ -193,6 +193,26 @@ func createSinks(configs []config.SinkConfig) ([]sink.Sink, error) {
 				table = "events"
 			}
 			sinks = append(sinks, sink.NewClickHouseSink(sc.Endpoint, database, table, sc.Username, sc.Password))
+		case "bigquery":
+			if sc.Project == "" {
+				return nil, fmt.Errorf("bigquery sink %q requires project", sc.Name)
+			}
+			if sc.Dataset == "" {
+				return nil, fmt.Errorf("bigquery sink %q requires dataset", sc.Name)
+			}
+			if sc.Table == "" {
+				return nil, fmt.Errorf("bigquery sink %q requires table", sc.Name)
+			}
+			if sc.Location == "" {
+				return nil, fmt.Errorf("bigquery sink %q requires location", sc.Name)
+			}
+			sinks = append(sinks, sink.NewBigQuerySink(sink.BigQueryOptions{
+				Project:             sc.Project,
+				Dataset:             sc.Dataset,
+				Table:               sc.Table,
+				Location:            sc.Location,
+				MaxInflightRequests: sc.MaxInflightRequests,
+			}))
 		case "file":
 			if sc.OutputDir == "" {
 				return nil, fmt.Errorf("file sink %q requires output_dir", sc.Name)

@@ -13,7 +13,7 @@ var envVarRe = regexp.MustCompile(`\$\{([^}]+)\}`)
 
 // Config is the top-level configuration struct.
 type Config struct {
-	Server ServerConfig          `yaml:"server"`
+	Server ServerConfig           `yaml:"server"`
 	Inputs map[string]InputConfig `yaml:"inputs"`
 	Buffer BufferConfig           `yaml:"buffer"`
 	Sinks  []SinkConfig           `yaml:"sinks"`
@@ -61,20 +61,24 @@ type BufferConfig struct {
 
 // SinkConfig holds settings for an output sink.
 type SinkConfig struct {
-	Name             string        `yaml:"name"`
-	Type             string        `yaml:"type"`
-	Mode             string        `yaml:"mode"`
-	DSN              string        `yaml:"dsn"`
-	Table            string        `yaml:"table"`
-	BatchSize        int           `yaml:"batch_size"`
-	FlushInterval    time.Duration `yaml:"flush_interval"`
-	AutoSchema       bool          `yaml:"auto_schema"`
-	OutputDir        string        `yaml:"output_dir"`
-	RotationInterval time.Duration `yaml:"rotation_interval"`
-	Endpoint         string        `yaml:"endpoint"`
-	Database         string        `yaml:"database"`
-	Username         string        `yaml:"username"`
-	Password         string        `yaml:"password"`
+	Name                string        `yaml:"name"`
+	Type                string        `yaml:"type"`
+	Mode                string        `yaml:"mode"`
+	DSN                 string        `yaml:"dsn"`
+	Table               string        `yaml:"table"`
+	BatchSize           int           `yaml:"batch_size"`
+	FlushInterval       time.Duration `yaml:"flush_interval"`
+	AutoSchema          bool          `yaml:"auto_schema"`
+	OutputDir           string        `yaml:"output_dir"`
+	RotationInterval    time.Duration `yaml:"rotation_interval"`
+	Endpoint            string        `yaml:"endpoint"`
+	Database            string        `yaml:"database"`
+	Project             string        `yaml:"project"`
+	Dataset             string        `yaml:"dataset"`
+	Location            string        `yaml:"location"`
+	MaxInflightRequests int           `yaml:"max_inflight_requests"`
+	Username            string        `yaml:"username"`
+	Password            string        `yaml:"password"`
 }
 
 // LoadConfig reads a YAML file, substitutes ${ENV_VAR} references, and

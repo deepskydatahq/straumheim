@@ -1,0 +1,34 @@
+id = "M011-E003"
+parent = "M011"
+title = "Render-to-BigQuery deployment proof"
+status = "blocked"
+created = 2026-08-21
+depends_on = ["M011-E002"]
+
+[outcome]
+description = """Least-privilege GCP and Render setup documentation plus a disposable live proof demonstrate that an HTTPS event reaches BigQuery with matching identity and JSON, then remove proof resources."""
+
+[job_story]
+description = """When enabling the production destination, I want a reproducible end-to-end proof and cleanup record, so that credentials, residency, query behavior, and delivery semantics are verified before cutover."""
+
+[testing]
+approach = "live-integration"
+criteria = [
+    "IAM, ADC secret mounting, Render config, validation SQL, costs, and teardown are documented",
+    "Synthetic and batched events from Render appear in BigQuery with matching IDs and JSON",
+    "Duplicate semantics are bounded and all temporary resources/credentials are removed",
+]
+validator_context = ["docs/destinations/bigquery.md", "docs/destinations/bigquery-proof.md", "deploy/render/"]
+
+[context]
+relevant_paths = ["render.yaml", "deploy/render/", "docs/hosting/", "product/missions/M009-durable-delivery.toml"]
+dependencies = ["GCP project and EU dataset", "Least-privilege service account", "Render Starter billing"]
+
+[notes]
+considerations = """Never commit service-account JSON. Block the live story with exact missing access rather than substituting a local-only test."""
+
+estimated_stories = 2
+
+[execution]
+blocked = 2026-08-21
+failure_reason = "Deployment documentation/configuration are complete; live proof awaits approved GCP project access and paid two-instance Render access."

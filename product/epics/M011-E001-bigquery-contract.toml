@@ -1,0 +1,30 @@
+id = "M011-E001"
+parent = "M011"
+title = "BigQuery table contract and row mapping"
+status = "complete"
+created = 2026-08-21
+depends_on = []
+
+[outcome]
+description = """A documented stable BigQuery schema, deterministic protobuf row mapping, and table bootstrap implementation preserve Record core fields and JSON payloads without dynamic per-property columns."""
+
+[job_story]
+description = """When events arrive with arbitrary properties, I want a stable analytical contract, so that new payload fields remain queryable without DDL churn."""
+
+[testing]
+approach = "unit-test"
+criteria = [
+    "Direct BigQuery versus Cloud Storage decision and table contract are documented",
+    "Configured dataset location is validated and missing tables are created partitioned by timestamp and clustered by protocol/source",
+    "Record values serialize deterministically to Storage Write protobuf rows with JSON payloads",
+]
+validator_context = ["docs/destinations/bigquery.md", "internal/sink/bigquery.go", "internal/sink/bigquery_test.go"]
+
+[context]
+relevant_paths = ["internal/record/record.go", "internal/sink/postgres.go", "internal/sink/clickhouse.go", "product/missions/M011-bigquery-destination.toml"]
+dependencies = []
+
+[notes]
+considerations = """Use fixed BigQuery JSON columns for payload and flattened data. Dataset creation remains explicit to prevent accidental location choices."""
+
+estimated_stories = 2
