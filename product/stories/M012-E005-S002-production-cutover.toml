@@ -31,5 +31,5 @@ reference_files = ["docs/hosting/migration-runbook.md"]
 
 [execution]
 blocked = 2026-08-22
-failure_reason = "Live proof M012-E005-S001 now passes. Production cutover still requires explicit owner approval of the collector domain, DNS window, production environment values, notification owners, and former-host rollback/retirement timing."
-evidence = "docs/operations/gcp-runbook.md defines the proven deployment, preflight, DNS cutover, rollback, seven-day soak, and gated Render-template/former-host retirement procedure."
+failure_reason = "Owner approved production values and the keyless production stack is deployed with generated-URL canaries passing. Cloudflare must still add the required collect CNAME so Cloud Run can issue the certificate; custom-domain canaries and the seven-day soak cannot begin until DNS resolves."
+evidence = "docs/operations/gcp-production.md records the clean production apply, immutable digest, resources, exact four-protocol BigQuery canaries, owner-approved wildcard/budget/no-prior-rollback state, and required DNS record. gcp-runbook.md defines certificate validation, soak, and retirement gates."

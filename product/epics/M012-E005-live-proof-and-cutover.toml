@@ -27,4 +27,4 @@ estimated_stories = 2
 
 [execution]
 blocked = 2026-08-22
-failure_reason = "The disposable EU proof and teardown pass completely. Production cutover remains blocked pending explicit approval of the custom domain/DNS window and production-owned resource values."
+failure_reason = "Disposable proof/teardown and generated-URL production canaries pass. The Cloud Run mapping for collect.partnerwithpropel.com is CertificatePending until the owner adds the required Cloudflare CNAME; custom-domain canaries and seven-day soak remain."

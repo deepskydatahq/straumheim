@@ -22,8 +22,8 @@ user_progress = "From 'the BigQuery path works but accepted events can disappear
 [execution]
 mode = "implementation"
 blocked = 2026-08-22
-failure_reason = "Implementation, all quality gates, and the complete keyless EU proof now pass, including all protocols, outage recovery, DLQ, duplicate bounds, replacement, rollback, monitoring/budget signals, and teardown. The mission outcome remains blocked only on explicitly approved production environment values, custom-domain/DNS cutover, soak, and former-host/template retirement."
-evidence = "See docs/operations/gcp-proof.md, docs/operations/m012-judgment.md, and product/stories/M012-E005-S002-production-cutover.toml."
+failure_reason = "Implementation, all gates, disposable proof/teardown, owner-approved keyless production provisioning, and four-protocol generated-URL canaries pass. The mission outcome remains blocked only because external Cloudflare DNS has not added the collect CNAME, leaving the managed certificate pending; custom-domain canaries, seven-day soak, and historical template/former-host retirement follow DNS."
+evidence = "See docs/operations/gcp-proof.md, docs/operations/gcp-production.md, docs/operations/m012-judgment.md, and product/stories/M012-E005-S002-production-cutover.toml."
 
 
 [scope]

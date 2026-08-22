@@ -37,20 +37,14 @@ Result: **blocked on production cutover — all 15 implementation/proof criteria
 
 ## Why the mission remains blocked
 
-The technical profile is production-ready and the disposable proof is removed, but the mission outcome says Straumheim **runs** on the production GCP path. No production DNS change was authorized in this execution window, and required owner-specific values are intentionally not inferred:
+The technical profile is production-ready, the disposable proof is removed, and the owner-approved production stack is running at its generated Cloud Run URL with four-protocol BigQuery canaries passing. The mission outcome remains incomplete because the external Cloudflare zone does not yet contain the required `collect` CNAME. The Cloud Run domain mapping is `CertificatePending`, so custom-domain canaries and the seven-day soak cannot start.
 
-- production collector domain and exact CORS origins;
-- DNS owner and rollback endpoint;
-- production dataset ID/retention and data owner;
-- alert notification owners/channels;
-- approved monthly budget in billing-account currency;
-- cutover window and seven-day soak start;
-- former host retirement authority.
+Approved/deployed values are recorded in `gcp-production.md`: `collect.partnerwithpropel.com`, owner-approved wildcard CORS, `straumheim_prod`, `timo@partnerwithpropel.com`, a 200 DKK budget approximating the requested USD 30, and no prior rollback endpoint because the domain was NXDOMAIN.
 
 ## Unblock condition
 
-1. Owner supplies/approves the production values above and explicitly authorizes the DNS window.
-2. Apply the production state with `delete_proof_data_on_destroy=false` and protected GitHub Environment approval.
-3. Execute custom-domain canaries, counters, alerts, rollback gates, and seven-day soak in `gcp-runbook.md`.
+1. In Cloudflare, add DNS-only CNAME `collect` → `ghs.googlehosted.com` (TTL Auto/300).
+2. Wait for Cloud Run `CertificateProvisioned=True` and HTTPS resolution.
+3. Execute custom-domain canaries and begin the seven-day soak in `gcp-runbook.md`.
 4. Retire the former host and historical Render files only after soak approval.
 5. Complete M012-E005-S002, E005, and M012, then repeat this judgment.
