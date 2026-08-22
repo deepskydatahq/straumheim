@@ -32,8 +32,12 @@ jobs:
       TF_VAR_region: ${{ vars.GCP_REGION }}
       TF_VAR_environment: ${{ inputs.environment }}
       TF_VAR_cors_allowed_origins: ${{ vars.GCP_CORS_ALLOWED_ORIGINS_JSON }}
+      TF_VAR_collector_domain: ${{ vars.GCP_COLLECTOR_DOMAIN }}
+      TF_VAR_dataset_id: ${{ vars.GCP_DATASET_ID }}
       TF_VAR_notification_channel_ids: ${{ vars.GCP_NOTIFICATION_CHANNEL_IDS_JSON }}
       TF_VAR_billing_account_id: ${{ vars.GCP_BILLING_ACCOUNT_ID }}
+      TF_VAR_monthly_budget_amount: ${{ vars.GCP_MONTHLY_BUDGET_AMOUNT }}
+      TF_VAR_delete_proof_data_on_destroy: ${{ inputs.environment == 'proof' }}
     steps:
       - uses: actions/checkout@v4
 

@@ -2,6 +2,10 @@ output "collector_url" {
   value = google_cloud_run_v2_service.collector.uri
 }
 
+output "collector_domain_status" {
+  value = var.collector_domain == "" ? null : google_cloud_run_domain_mapping.collector[0].status
+}
+
 output "writer_url" {
   value     = google_cloud_run_v2_service.writer.uri
   sensitive = true

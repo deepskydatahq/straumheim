@@ -7,10 +7,8 @@ check "eu_region" {
 
 check "production_cors" {
   assert {
-    condition = var.environment != "production" || (
-      length(var.cors_allowed_origins) > 0 && !contains(var.cors_allowed_origins, "*")
-    )
-    error_message = "production requires at least one exact CORS origin and forbids wildcard."
+    condition     = var.environment != "production" || length(var.cors_allowed_origins) > 0
+    error_message = "production requires an explicit CORS origin list; use wildcard only with recorded owner approval."
   }
 }
 

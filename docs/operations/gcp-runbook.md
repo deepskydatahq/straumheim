@@ -26,7 +26,7 @@ Record project, region, environment, image digest, OpenTofu state generation, co
 - [ ] GitHub Environment requires approval for production apply.
 - [ ] WIF attribute condition allows only the intended repository/ref/environment.
 - [ ] No user-managed service-account key exists for runtime or deployment.
-- [ ] CORS origins are exact; wildcard is rejected for production.
+- [ ] CORS origins are exact unless the data owner explicitly approves wildcard collection from arbitrary sites; record that exception in the change evidence.
 - [ ] Pub/Sub retention exceeds the accepted maximum outage window.
 - [ ] Retry min/max and DLQ attempts are approved.
 - [ ] Monitoring channels receive a test notification.

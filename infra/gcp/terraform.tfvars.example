@@ -6,6 +6,7 @@ region      = "europe-west1"
 image = "europe-west1-docker.pkg.dev/your-approved-project/straumheim/straumheim@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 cors_allowed_origins = ["https://app.example.com"]
+collector_domain    = "" # set only after domain ownership is verified
 dataset_id          = "straumheim_proof"
 delete_proof_data_on_destroy = true
 

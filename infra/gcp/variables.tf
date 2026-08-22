@@ -27,6 +27,12 @@ variable "image" {
   }
 }
 
+variable "collector_domain" {
+  description = "Optional verified custom domain mapped to the collector service."
+  type        = string
+  default     = ""
+}
+
 variable "dataset_id" {
   description = "Optional BigQuery dataset ID; defaults to an environment-isolated name."
   type        = string
@@ -46,7 +52,7 @@ variable "table_id" {
 }
 
 variable "cors_allowed_origins" {
-  description = "Exact collector CORS origins. Never use wildcard in production."
+  description = "Collector CORS origins. Prefer exact values; wildcard requires explicit owner approval."
   type        = list(string)
   default     = []
 }

@@ -80,9 +80,12 @@ Configure these **GitHub Environment variables** (not repository secrets contain
 | `GCP_STATE_BUCKET` | bootstrap state bucket |
 | `GCP_WORKLOAD_IDENTITY_PROVIDER` | full provider resource name |
 | `GCP_DEPLOY_SERVICE_ACCOUNT` | deployment service-account email |
-| `GCP_CORS_ALLOWED_ORIGINS_JSON` | JSON/HCL list such as `["https://app.example.com"]` |
+| `GCP_CORS_ALLOWED_ORIGINS_JSON` | JSON/HCL list such as `["https://app.example.com"]`; wildcard only with owner approval |
+| `GCP_COLLECTOR_DOMAIN` | verified production domain, empty for initial proof |
+| `GCP_DATASET_ID` | environment-owned BigQuery dataset ID |
 | `GCP_NOTIFICATION_CHANNEL_IDS_JSON` | list of Monitoring channel IDs |
 | `GCP_BILLING_ACCOUNT_ID` | optional billing account ID |
+| `GCP_MONTHLY_BUDGET_AMOUNT` | amount in the billing account's native currency |
 
 The workflow requests only `contents: read` and `id-token: write`, authenticates through WIF, pushes one `linux/amd64` image, and passes the resulting `@sha256:` reference to OpenTofu. When a billing account is configured, the budget amount uses that account's actual currency rather than assuming EUR/USD. The Google provider attributes API quota to `project_id`, which is required for user-ADC bootstrap of billing APIs.
 
