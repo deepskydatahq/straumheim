@@ -25,14 +25,6 @@ resource "google_bigquery_dataset_iam_member" "writer_data_editor" {
   member     = "serviceAccount:${google_service_account.writer.email}"
 }
 
-resource "google_cloud_run_v2_service_iam_member" "public_collector" {
-  project  = var.project_id
-  location = google_cloud_run_v2_service.collector.location
-  name     = google_cloud_run_v2_service.collector.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
-}
-
 resource "google_cloud_run_v2_service_iam_member" "push_writer" {
   project  = var.project_id
   location = google_cloud_run_v2_service.writer.location

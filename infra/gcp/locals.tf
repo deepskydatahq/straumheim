@@ -7,6 +7,7 @@ locals {
     "bigquery.googleapis.com",
     "bigquerystorage.googleapis.com",
     "billingbudgets.googleapis.com",
+    "cloudbilling.googleapis.com",
     "cloudresourcemanager.googleapis.com",
     "iam.googleapis.com",
     "iamcredentials.googleapis.com",

@@ -84,7 +84,7 @@ Configure these **GitHub Environment variables** (not repository secrets contain
 | `GCP_NOTIFICATION_CHANNEL_IDS_JSON` | list of Monitoring channel IDs |
 | `GCP_BILLING_ACCOUNT_ID` | optional billing account ID |
 
-The workflow requests only `contents: read` and `id-token: write`, authenticates through WIF, pushes one `linux/amd64` image, and passes the resulting `@sha256:` reference to OpenTofu.
+The workflow requests only `contents: read` and `id-token: write`, authenticates through WIF, pushes one `linux/amd64` image, and passes the resulting `@sha256:` reference to OpenTofu. When a billing account is configured, the budget amount uses that account's actual currency rather than assuming EUR/USD. The Google provider attributes API quota to `project_id`, which is required for user-ADC bootstrap of billing APIs.
 
 ## Plan and apply
 
@@ -109,14 +109,14 @@ tofu -chdir=infra/gcp apply deploy.tfplan
 
 ## IAM result
 
-- collector: config-secret accessor and publisher on one events topic;
+- collector: config-secret accessor and publisher on one events topic; its route-invoker IAM check is explicitly disabled because tracker traffic is public and organization domain-restricted-sharing policy rejects `allUsers` bindings;
 - writer: config-secret accessor and BigQuery Data Editor on one dataset;
 - push identity: invoker on the private writer only;
 - Pub/Sub service agent: token creation for the push identity plus dead-letter forwarding;
-- writer has no `allUsers` binding;
+- writer has no `allUsers` binding and retains the IAM invoker check;
 - no runtime service account has a downloadable key.
 
-Cloud Run IAM performs push authentication before the application handler. `INGRESS_TRAFFIC_ALL` is required for Pub/Sub's hosted push endpoint; absence of a public invoker binding keeps the writer private.
+Cloud Run IAM authenticates the push identity before writer application handling. `INGRESS_TRAFFIC_ALL` is required for Pub/Sub's hosted push endpoint; absence of a public writer binding keeps it private. Disabling only the collector's invoker check is Cloud Run's documented public-service mechanism when domain-restricted sharing prevents granting `allUsers`.
 
 ## Rollback
 

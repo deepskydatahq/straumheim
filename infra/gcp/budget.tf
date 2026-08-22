@@ -1,3 +1,8 @@
+data "google_billing_account" "current" {
+  count           = var.billing_account_id == "" ? 0 : 1
+  billing_account = var.billing_account_id
+}
+
 resource "google_billing_budget" "environment" {
   count = var.billing_account_id == "" ? 0 : 1
 
@@ -10,7 +15,7 @@ resource "google_billing_budget" "environment" {
 
   amount {
     specified_amount {
-      currency_code = "EUR"
+      currency_code = data.google_billing_account.current[0].currency_code
       units         = tostring(var.monthly_budget_amount)
     }
   }

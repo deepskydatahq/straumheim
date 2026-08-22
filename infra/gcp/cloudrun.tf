@@ -1,9 +1,14 @@
 resource "google_cloud_run_v2_service" "collector" {
-  name                = "${local.prefix}-collector"
-  location            = var.region
-  deletion_protection = false
-  ingress             = "INGRESS_TRAFFIC_ALL"
-  labels              = local.labels
+  name                 = "${local.prefix}-collector"
+  location             = var.region
+  deletion_protection  = false
+  ingress              = "INGRESS_TRAFFIC_ALL"
+  invoker_iam_disabled = true
+  labels               = local.labels
+
+  lifecycle {
+    ignore_changes = [scaling]
+  }
 
   template {
     service_account = google_service_account.collector.email
@@ -82,6 +87,10 @@ resource "google_cloud_run_v2_service" "writer" {
   deletion_protection = false
   ingress             = "INGRESS_TRAFFIC_ALL"
   labels              = local.labels
+
+  lifecycle {
+    ignore_changes = [scaling]
+  }
 
   template {
     service_account = google_service_account.writer.email
