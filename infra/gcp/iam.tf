@@ -1,15 +1,15 @@
 resource "google_service_account" "collector" {
-  account_id   = "${local.prefix}-collector"
+  account_id   = "${local.identity_prefix}-collector"
   display_name = "Straumheim ${var.environment} collector"
 }
 
 resource "google_service_account" "writer" {
-  account_id   = "${local.prefix}-writer"
+  account_id   = "${local.identity_prefix}-writer"
   display_name = "Straumheim ${var.environment} BigQuery writer"
 }
 
 resource "google_service_account" "push" {
-  account_id   = "${local.prefix}-push"
+  account_id   = "${local.identity_prefix}-push"
   display_name = "Straumheim ${var.environment} Pub/Sub push identity"
 }
 
