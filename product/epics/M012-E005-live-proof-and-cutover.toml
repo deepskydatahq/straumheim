@@ -26,5 +26,5 @@ considerations = "Block truthfully when owner credentials or cutover authority a
 estimated_stories = 2
 
 [execution]
-blocked = 2026-08-21
-failure_reason = "Implementation, static infrastructure, and local gates are ready; live EU proof and production cutover require reauthenticated GCP owner access and an explicitly approved DNS window."
+blocked = 2026-08-22
+failure_reason = "The disposable EU proof and teardown pass completely. Production cutover remains blocked pending explicit approval of the custom domain/DNS window and production-owned resource values."

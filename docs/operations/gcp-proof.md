@@ -1,125 +1,161 @@
 # M012 GCP-native live proof
 
-- **Status:** blocked before GCP provisioning
-- **Date:** 2026-08-21
-- **Target:** EU Cloud Run collector → Pub/Sub retry/DLQ → private Cloud Run writer → EU BigQuery
+- **Status:** complete — EU proof and teardown passed
+- **Date:** 2026-08-22
+- **Project:** `propel-data-hub`
+- **Region/location:** Cloud Run and Artifact Registry `europe-west1`; BigQuery `EU`
+- **Path:** public Cloud Run collector → Pub/Sub retry/DLQ → private Cloud Run writer → BigQuery
 
-## Access result
+## Provisioning evidence
 
-Implementation and credential-free validation are complete, but the configured owner account `timo@partnerwithpropel.com` cannot refresh its token non-interactively:
+OpenTofu used the GCS state prefix `gs://propel-data-hub-straumheim-tofu/straumheim/proof`, Google provider 6.50.0, and image:
 
 ```text
-Reauthentication failed. cannot prompt during non-interactive execution.
-Please run: gcloud auth login
+europe-west1-docker.pkg.dev/propel-data-hub/straumheim-proof/straumheim
+@sha256:95fe066fa2e88f9e3099842ec7afaba4fb3f4a7871b661083def041ece21c7ca
 ```
 
-Consequently no M012 Cloud Run, Pub/Sub, Artifact Registry, Secret Manager, Monitoring, IAM, BigQuery, budget, WIF, or state-bucket proof resource was created. Render remains fully de-provisioned (`render services` and `render projects` both return null).
+Initial full plan: 29 adds, one metadata update, zero destroys. Final reconciled plan returned `No changes`.
 
-## Validated before provisioning
+Created topology:
 
-- Collector and writer request contracts have fake-based unit/integration tests.
-- Webhook, pixel, and Snowplow requests serialize complete Records and preserve IDs through the push writer.
-- Publish and sink failures produce non-success HTTP outcomes.
-- Go format, full unit tests, race tests, build, and vet pass.
-- OpenTofu format/init/validate pass with Google provider 6.50.0.
-- Workflow YAML parses and uses WIF rather than a key.
-- Scratch container builds with a 1.335 MB build context after excluding OpenTofu artifacts.
-- No service-account JSON, private key, state, tfvars, or plan is present in Git.
+| Resource | Evidence |
+|---|---|
+| Collector | `straumheim-proof-collector`, min 2/max 4, public invoker check disabled |
+| Writer | `straumheim-proof-writer`, min 0/max 4, no public binding |
+| Topic/subscription | `straumheim-proof-events` / `straumheim-proof-writer` |
+| DLQ | `straumheim-proof-dead-letter` plus inspection subscription |
+| BigQuery | `straumheim_m012_proof.events` |
+| Runtime identities | separate collector, writer, and push accounts; zero user-managed keys |
+| Monitoring | collector/writer 5xx, backlog, oldest age, and DLQ policies wired to a disposable email channel |
+| Budget | 25 DKK project budget at 50/90/100%; currency read from the billing account |
 
-These checks do not replace live provider evidence.
+Two provider constraints were found and fixed during proof:
 
-## Provisioning
+1. Organization domain-restricted sharing rejected an `allUsers` binding. The collector now uses Cloud Run's documented `invoker_iam_disabled` public-service mechanism; writer IAM remains enforced.
+2. Billing APIs required user-project quota attribution and the billing account's actual DKK currency. The provider now sets `billing_project`/`user_project_override`, enables Cloud Billing, and derives currency from the billing account.
 
-Follow `infra/gcp/README.md` to bootstrap the state bucket, Artifact Registry repository, deployment WIF identity, GitHub Environment variables, and proof plan. Use:
+The externally bootstrapped GCS state bucket is retained as an approved production prerequisite; its proof prefix was removed during teardown. Required APIs remain enabled because OpenTofu sets `disable_on_destroy=false` for shared project capabilities.
 
-- a dedicated project or isolated proof prefixes;
-- `environment=proof`;
-- `region=europe-west1` or another explicitly approved EU region;
-- `dataset_id=straumheim_m012_proof`;
-- `delete_proof_data_on_destroy=true`;
-- exact proof CORS origins;
-- an immutable image digest;
-- tested notification channels.
+## IAM evidence
 
-Capture project/resource names, image digest, revisions, plan summary, UTC timestamps, IDs, metric values, and cleanup results only. Never capture tokens, state contents, secret values, message payloads, or screenshots containing credentials.
+- Unauthenticated writer POST returned HTTP 403 before application code.
+- Writer Cloud Run IAM contained only `straumheim-proof-push@...` as `roles/run.invoker`.
+- Events topic IAM contained only the collector runtime identity as publisher.
+- Writer had dataset-scoped `roles/bigquery.dataEditor` plus access to its own config secret.
+- Collector had topic publisher plus access to its own config secret.
+- Pub/Sub service agent had only push token-minting and DLQ forwarding permissions required by those features.
+- `gcloud iam service-accounts keys list --managed-by=user` returned `[]` for collector, writer, and push identities.
+- No service-account JSON was created or mounted.
 
-## Live checks
+## Protocol and BigQuery proof
 
-### 1. IAM and topology
+Collector URL health returned HTTP 200 in 114 ms. Writer remained private.
 
-- Confirm collector has a public invoker binding; writer does not.
-- Confirm unauthenticated writer POST returns 401/403 before application handling.
-- Confirm push identity alone has writer invoker.
-- Confirm collector identity only has topic publisher plus config-secret access.
-- Confirm writer identity only has dataset writer plus config-secret access.
-- Confirm no user-managed key exists for any runtime identity.
-- Confirm two warm collector instances and independent writer scaling settings.
+At `2026-08-22T09:27:13Z`, all enabled protocols returned HTTP 200:
 
-### 2. Protocol and identity
+| Protocol | Proof tag | BigQuery Record ID | JSON result |
+|---|---|---|---|
+| webhook | `m012-webhook-20260822T092713Z` | `01a028cb-b29d-7195-ba39-bbe7daf431eb` | nested and flattened count `1` |
+| pixel | `m012-pixel-20260822T092713Z` | `01a028cb-b35f-7ee3-b2c4-dc064232f513` | payload matched |
+| Snowplow GET | `m012-snowplow-get-20260822T092713Z` | `01a028cb-b3fe-78dc-9a4b-2e803d122176` | payload matched |
+| Snowplow POST | `m012-snowplow-post-20260822T092713Z` | `01a028cb-b4ae-7ed5-a8ee-22f63df14d43` | nested and flattened count `4` |
 
-Send uniquely tagged:
+A parameterized BigQuery query returned exactly four rows and the webhook response ID matched its stored row.
 
-1. webhook POST;
-2. pixel GET;
-3. Snowplow GET `/sp/i`;
-4. Snowplow batch POST `/sp/tp2`.
+## Durable outage and recovery
 
-For each, record HTTP outcome and returned/observed Record ID. Query BigQuery core fields, `payload`, and `flattened`; require exact ID and JSON matches. Check Pub/Sub message attributes expose the same `record_id` without logging payload.
+The push identity's writer invoker binding was removed after IAM propagation. Five webhook requests were still durably accepted by the collector with IDs:
 
-### 3. Durable writer outage
+```text
+01a028d1-4312-7b16-85aa-099b59eb8405
+01a028d1-43af-74a2-b068-1434922f2059
+01a028d1-4436-718c-a2ef-4f13c1cce344
+01a028d1-44b2-7248-b651-65fa26dd8f90
+01a028d1-4533-7e3c-907f-f08f371b2bcd
+```
 
-In proof only, deploy a writer revision with invalid destination configuration or temporarily remove its dataset binding. Continue sending collector canaries.
+A query during the outage returned zero rows. The binding was restored through OpenTofu before the DLQ attempt bound; 15 seconds later BigQuery returned all five exact IDs without manual replay. Writer request logs recorded both rejected edge requests and successful 204 push acknowledgements.
 
-Pass when:
+A longer preliminary IAM outage intentionally crossed the five-attempt bound and moved five valid proof messages to the DLQ. They were inspected and acknowledged before the dedicated malformed-message drill. This also demonstrated that IAM outage duration must stay below the configured dead-letter bound if automatic delivery rather than operator replay is desired.
 
-- collector still confirms Pub/Sub acceptance;
-- writer returns non-success and does not acknowledge messages;
-- backlog and oldest age rise;
-- writer/backlog alerts route to the owner;
-- restoring the known-good writer drains all IDs without manual replay; and
-- duplicates, if any, retain one Record ID and the documented SQL returns one analytical row.
+## Bounded failure and DLQ
 
-### 4. Dead letter
+A deliberately malformed message was published as message `20630539836204761` with proof attribute `m012-malformed-20260822`.
 
-Publish one deliberately malformed message directly to the proof topic. Do not use production traffic. Pass when bounded non-success attempts move it to the DLQ, the DLQ alert fires, and inspection records message metadata/error without payload exposure. Explicitly dispose of the message after evidence.
+Writer logs recorded five bounded attempts at 10–23 second intervals:
 
-### 5. Replacement and rollback
+```text
+delivery_attempt=1 ... unmarshal record
+...
+delivery_attempt=5 ... unmarshal record
+```
 
-Poll `/health` and submit canaries while replacing the collector revision. Record non-200 count and maximum latency. Deploy a failing candidate or route to a known bad proof revision, then restore the known-good digest using Cloud Run revision traffic. Pass only with explained behavior and no missing acknowledged IDs.
+No payload was logged. Pub/Sub forwarded the message to the DLQ, where the inspection subscription exposed the retained proof attribute. Monitoring reported DLQ backlog value `1` for consecutive minute samples and the enabled DLQ policy referenced the proof email channel. The alerts API had not exposed an incident before teardown, so provider time-series/policy wiring is proven but email receipt was not independently confirmed in this session.
 
-### 6. Monitoring and cost
+## Duplicate bound
 
-Confirm real time series/policies for collector and writer 5xx, oldest unacked age, undelivered backlog, DLQ backlog, and budget thresholds. Record normal and outage/drain instance counts and usage inputs for the formula in `gcp-runbook.md`.
+The same canonical Record ID `m012-controlled-duplicate-20260822` was published twice. BigQuery returned:
+
+```text
+raw_rows=2
+deduplicated_rows=1
+```
+
+using `ROW_NUMBER() OVER (PARTITION BY id ORDER BY received_at DESC)`. M012 remains explicitly at-least-once.
+
+## Replacement and rollback
+
+Cloud Run metrics showed two idle collector instances and an independently scaling writer.
+
+During a collector revision replacement:
+
+- 140 health requests at 500 ms intervals all returned HTTP 200;
+- maximum health latency was 152 ms;
+- 14 interleaved webhook canaries all returned HTTP 200;
+- all 14 response IDs appeared in BigQuery;
+- revision `straumheim-proof-collector-00002-vcp` replaced `...-00001-4wn`.
+
+Traffic was then rolled back 100% to `...-00001-4wn`. Health remained HTTP 200 and rollback canary ID `01a028d8-4eb2-732b-98fe-1394a6e4479d` appeared in BigQuery. A final OpenTofu apply removed the drill-only configuration and a subsequent plan was clean.
+
+## Cost and monitoring evidence
+
+- A 25 DKK budget was created with 50/90/100% thresholds and removed during teardown.
+- Monitoring time series exposed collector/writer instance counts, Pub/Sub backlog/age, and DLQ backlog.
+- Five alert policies were enabled and referenced the disposable email channel.
+- Application logs exposed message ID, Record ID when decodable, delivery attempt, status, and error without payloads or credentials.
+- The proof used two warm collector instances only for the short evidence window; no fixed monthly estimate is inferred from this run.
 
 ## Teardown
 
-Review a destroy plan against the proof state prefix, then remove proof resources. Verify independently:
+A reviewed destroy plan contained 43 managed proof resources and zero changes/adds. OpenTofu destroy completed successfully, then the disposable notification channel and all versioned proof-state objects were removed manually.
 
-- no proof Cloud Run services/revisions;
-- no proof topics/subscriptions or DLQ messages;
-- no proof BigQuery dataset/table;
-- no proof secrets/versions;
-- no proof runtime identities/bindings/keys;
-- no proof alert policies/budgets/images;
-- no temporary credentials/configs; and
-- no production-owned resource in the destroy result.
+Independent verification returned:
 
-## Evidence table
+- Cloud Run proof services: `[]`; former URL HTTP 404;
+- Pub/Sub proof topics/subscriptions: `[]`;
+- BigQuery proof dataset: HTTP 404;
+- proof service accounts and secrets: `[]`;
+- Artifact Registry proof repositories: `[]`;
+- proof alert policies/channels and budget: `[]`;
+- proof state prefix: no objects.
 
-| Criterion | Status | Evidence |
+Retained intentionally for the production phase: enabled GCP APIs, owner ADC/WIF bootstrap work, and the empty versioned GCS state bucket. No proof event data, runtime identity, image, secret, IAM binding, alert, budget, or service remains.
+
+## Mission evidence table
+
+| Criterion | Result | Evidence |
 |---|---|---|
-| Confirmed publish before input success | Pass locally | Fakes and all-protocol integration tests |
-| Publish failure returns non-success | Pass locally | Unit/integration tests |
-| Private authenticated writer | Blocked | Requires Cloud Run IAM proof |
-| BigQuery confirmation before push acknowledgement | Pass locally | Push/sink tests; live provider result blocked |
-| Writer outage queues and redelivers | Blocked | Requires live Pub/Sub/Cloud Run |
-| Bounded retry and DLQ | Pass statically / blocked live | OpenTofu validates; provider behavior unobserved |
-| Duplicate ID semantics | Pass contractually / blocked live | M011 evidence and M012 SQL; Pub/Sub duplicate unobserved |
-| No post-request correctness work | Pass | Code review and synchronous-result tests |
-| Keyless least-privilege IAM | Pass statically / blocked live | OpenTofu graph; applied policy unobserved |
-| Repeatable EU immutable infrastructure | Pass statically / blocked live | OpenTofu/workflow validation; apply blocked |
-| Warm collector replacement | Blocked | Requires live Cloud Run |
-| Monitoring routes actionable alerts | Blocked | Policies validate; time series/notification unobserved |
-| All protocols reach BigQuery | Pass locally / blocked live | Fake request path passes; GCP path unobserved |
-| Rollback and teardown | Blocked | No proof resources created |
-| Full local quality gates | Pass | Go/race/build/vet, tofu, workflow YAML, Docker |
+| Confirmed publish before success and fail-closed publishing | Pass | unit/all-protocol tests plus public proof |
+| Private authenticated writer and confirmed BigQuery append | Pass | unauthenticated 403, push-only IAM, exact BigQuery IDs |
+| Outage queues and automatically recovers | Pass | zero rows during outage, five exact rows after IAM restore |
+| Bounded retry and DLQ | Pass | five logged attempts and malformed DLQ message |
+| Duplicate semantics | Pass | two raw rows, one deduplicated row |
+| No post-request correctness dependency | Pass | implementation contract and Cloud Run request proof |
+| Keyless least-privilege IAM | Pass | applied policies and empty user-key inventories |
+| Repeatable EU immutable infrastructure | Pass | digest deployment, remote state, clean reconciled plan |
+| Warm replacement and independent scaling | Pass | 140/140 health, 14/14 canaries, instance metrics |
+| Monitoring and budget signals | Pass with noted notification limitation | live time series/policies/channel and DKK budget; email receipt unconfirmed |
+| All protocols reach BigQuery | Pass | four protocol rows with matching IDs/JSON |
+| Rollback and teardown | Pass | revision rollback canary and complete independent cleanup |
+| Full quality gates | Pass | Go/race/build/vet, OpenTofu, workflow YAML, Docker |

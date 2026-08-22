@@ -1,7 +1,7 @@
 id = "M012-E005-S001"
 parent = "M012-E005"
 title = "Run disposable EU Cloud Run Pub/Sub proof"
-status = "blocked"
+status = "complete"
 triage = "ready"
 created = 2026-08-21
 
@@ -33,6 +33,5 @@ implementation_hints = "Requires owner GCP credentials and billing; block with e
 reference_files = ["docs/destinations/bigquery-proof.md"]
 
 [execution]
-blocked = 2026-08-21
-failure_reason = "The configured GCP owner account requires interactive reauthentication, so no Cloud Run/Pub/Sub/IAM/Monitoring proof resources can be provisioned or observed. No substitute local result is claimed."
-evidence = "docs/operations/gcp-proof.md records completed credential-free gates, exact access failure, live procedure, teardown, and criterion-by-criterion blocked evidence."
+completed = 2026-08-22
+evidence = "docs/operations/gcp-proof.md records keyless EU provisioning, four protocol/BigQuery matches, IAM privacy, automatic five-message outage recovery, bounded five-attempt malformed DLQ, duplicate bounds, 140/140 replacement health, rollback, live metrics/budget, clean plan, and independently verified teardown."
