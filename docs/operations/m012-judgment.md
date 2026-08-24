@@ -37,14 +37,13 @@ Result: **blocked on production cutover — all 15 implementation/proof criteria
 
 ## Why the mission remains blocked
 
-The technical profile is production-ready, the disposable proof is removed, and the owner-approved production stack is running at its generated Cloud Run URL with four-protocol BigQuery canaries passing. The mission outcome remains incomplete because the external Cloudflare zone does not yet contain the required `collect` CNAME. The Cloud Run domain mapping is `CertificatePending`, so custom-domain canaries and the seven-day soak cannot start.
+The technical profile is production-ready, the disposable proof is removed, and the owner-approved production stack is serving `https://collect.partnerwithpropel.com`. Managed TLS and four-protocol custom-domain BigQuery canaries pass. The mission outcome remains incomplete only because the required seven-day soak began `2026-08-24T07:43:32Z` and cannot complete before `2026-08-31T07:43:32Z`.
 
-Approved/deployed values are recorded in `gcp-production.md`: `collect.partnerwithpropel.com`, owner-approved wildcard CORS, `straumheim_prod`, `timo@partnerwithpropel.com`, a 200 DKK budget approximating the requested USD 30, and no prior rollback endpoint because the domain was NXDOMAIN.
+Approved/deployed values are recorded in `gcp-production.md`: owner-approved wildcard CORS, `straumheim_prod`, `timo@partnerwithpropel.com`, a 200 DKK budget approximating the requested USD 30, and no prior rollback endpoint because the domain was NXDOMAIN. Five-minute scheduled canaries and global SSL uptime checks now automate soak evidence.
 
 ## Unblock condition
 
-1. In Cloudflare, add DNS-only CNAME `collect` → `ghs.googlehosted.com` (TTL Auto/300).
-2. Wait for Cloud Run `CertificateProvisioned=True` and HTTPS resolution.
-3. Execute custom-domain canaries and begin the seven-day soak in `gcp-runbook.md`.
-4. Retire the former host and historical Render files only after soak approval.
-5. Complete M012-E005-S002, E005, and M012, then repeat this judgment.
+1. Keep the production stack and automated canaries running through at least `2026-08-31T07:43:32Z`.
+2. Verify uptime checks, scheduler execution, fresh unique BigQuery canaries, queue age/backlog/DLQ, Cloud Run errors, instance counts, and budget evidence across the full window.
+3. Retire the former host and historical Render files only after soak approval.
+4. Complete M012-E005-S002, E005, and M012, then repeat this judgment.

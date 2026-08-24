@@ -1,6 +1,6 @@
 # GCP production deployment record
 
-- **Status:** deployed and validated on generated URL; custom-domain DNS/certificate pending
+- **Status:** production custom domain live; automated seven-day soak in progress
 - **Date:** 2026-08-22
 - **Project:** `propel-data-hub`
 - **Region/location:** `europe-west1` / BigQuery `EU`
@@ -15,7 +15,7 @@
 | Alert owner | `timo@partnerwithpropel.com` |
 | Budget request | USD 30/month; implemented as 200 DKK in the billing account's required native currency |
 | Prior rollback endpoint | None; domain was NXDOMAIN before deployment |
-| DNS/cutover | Explicitly approved; external Cloudflare change still requires owner action |
+| DNS/cutover | Approved and applied: DNS-only `collect` CNAME to `ghs.googlehosted.com` |
 
 Because no prior DNS record or reachable collector existed, DNS rollback is removal of the new `collect` CNAME, returning to the recorded NXDOMAIN state. There is no former endpoint to restore.
 
@@ -55,24 +55,45 @@ Before DNS, `/health` returned HTTP 200 in 131 ms. Webhook, pixel, Snowplow GET,
 | Snowplow GET | `01a02a29-887e-783b-b1ac-ffd3b097ba10` | matching proof payload |
 | Snowplow POST | `01a02a29-8934-7a5d-85b4-e11a5f3dd993` | nested/flattened count 4 |
 
-## Required DNS action
+## Custom-domain cutover
 
-Cloud Run created the domain mapping, but certificate issuance cannot start until Cloudflare contains:
-
-```text
-Type:   CNAME
-Name:   collect
-Target: ghs.googlehosted.com
-Proxy:  DNS only (not proxied) during certificate provisioning
-TTL:    Auto or 300 seconds
-```
-
-Current mapping status:
+Cloudflare now serves DNS-only CNAME `collect` → `ghs.googlehosted.com`. The first certificate attempt had backed off before DNS was added, so the OpenTofu domain mapping was safely replaced after DNS propagation. Cloud Run then reported all conditions true:
 
 ```text
-Ready: Unknown / CertificatePending
-CertificateProvisioned: Unknown / CertificatePending
+Ready: True
+CertificateProvisioned: True
 DomainRoutable: True
 ```
 
-After the DNS record resolves, wait for the managed certificate, then run all four canaries through `https://collect.partnerwithpropel.com`, verify matching production BigQuery rows, and begin the seven-day soak. Do not remove historical Render files or retire any former host until the soak completes, even though Render currently has no live resources.
+HTTPS health returned HTTP 200 in 95 ms using TLS 1.3. Google Trust Services certificate details:
+
+```text
+CN/SAN: collect.partnerwithpropel.com
+valid: 2026-08-24 through 2026-11-22
+issuer: Google Trust Services WR3
+```
+
+At `2026-08-24T07:34:51Z`, custom-domain webhook, pixel, Snowplow GET, and Snowplow POST all returned HTTP 200. BigQuery returned exactly four matching rows:
+
+```text
+webhook       01a032b1-8b96-70fc-bb9d-7e7f2cb225bd
+pixel         01a032b1-8c63-746b-80b3-95ce32216126
+snowplow GET  01a032b1-8d35-7471-890c-ad723f8bb7e3
+snowplow POST 01a032b1-8dec-7087-8d89-c233ce23f3d1
+```
+
+Nested and flattened values matched for webhook and Snowplow POST.
+
+## Automated soak
+
+The seven-day soak began at the first successful scheduled canary on `2026-08-24T07:43:32Z` and cannot complete before `2026-08-31T07:43:32Z`.
+
+OpenTofu now manages:
+
+- a five-minute Cloud Scheduler POST to the custom-domain webhook with `proof_id=m012-production-soak`;
+- a 60-second SSL-validating uptime check from Europe, USA, and Asia-Pacific;
+- an alert after two minutes of failed HTTPS checks.
+
+A manual scheduler run succeeded and its first row appeared in `straumheim_prod.events` with one unique generated Record ID. Uptime time series reported `True` from Belgium, Oregon, Iowa, and Singapore. The final production OpenTofu plan returned `No changes`.
+
+Do not remove historical Render files or retire any former host until the soak completes, even though Render currently has no live resources.

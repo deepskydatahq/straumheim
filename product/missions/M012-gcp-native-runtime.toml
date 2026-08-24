@@ -22,7 +22,7 @@ user_progress = "From 'the BigQuery path works but accepted events can disappear
 [execution]
 mode = "implementation"
 blocked = 2026-08-22
-failure_reason = "Implementation, all gates, disposable proof/teardown, owner-approved keyless production provisioning, and four-protocol generated-URL canaries pass. The mission outcome remains blocked only because external Cloudflare DNS has not added the collect CNAME, leaving the managed certificate pending; custom-domain canaries, seven-day soak, and historical template/former-host retirement follow DNS."
+failure_reason = "Implementation, gates, disposable proof/teardown, keyless production provisioning, custom-domain TLS, and all production protocol canaries pass. The automated seven-day soak began 2026-08-24T07:43:32Z and mission completion/historical retirement remain blocked until at least 2026-08-31T07:43:32Z."
 evidence = "See docs/operations/gcp-proof.md, docs/operations/gcp-production.md, docs/operations/m012-judgment.md, and product/stories/M012-E005-S002-production-cutover.toml."
 
 

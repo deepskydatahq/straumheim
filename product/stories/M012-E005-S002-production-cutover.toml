@@ -31,5 +31,5 @@ reference_files = ["docs/hosting/migration-runbook.md"]
 
 [execution]
 blocked = 2026-08-22
-failure_reason = "Owner approved production values and the keyless production stack is deployed with generated-URL canaries passing. Cloudflare must still add the required collect CNAME so Cloud Run can issue the certificate; custom-domain canaries and the seven-day soak cannot begin until DNS resolves."
-evidence = "docs/operations/gcp-production.md records the clean production apply, immutable digest, resources, exact four-protocol BigQuery canaries, owner-approved wildcard/budget/no-prior-rollback state, and required DNS record. gcp-runbook.md defines certificate validation, soak, and retirement gates."
+failure_reason = "Production DNS, managed certificate, and four-protocol custom-domain canaries now pass. The automated seven-day soak started 2026-08-24T07:43:32Z and cannot complete before 2026-08-31T07:43:32Z; historical template/former-host retirement remains gated until then."
+evidence = "docs/operations/gcp-production.md records the clean production apply, immutable digest, generated/custom URL canaries, TLS certificate, BigQuery IDs, scheduled five-minute canary, global uptime checks, approved wildcard/budget/no-prior-rollback state, and soak window."

@@ -27,4 +27,4 @@ estimated_stories = 2
 
 [execution]
 blocked = 2026-08-22
-failure_reason = "Disposable proof/teardown and generated-URL production canaries pass. The Cloud Run mapping for collect.partnerwithpropel.com is CertificatePending until the owner adds the required Cloudflare CNAME; custom-domain canaries and seven-day soak remain."
+failure_reason = "Disposable proof/teardown, production provisioning, custom-domain TLS, and production canaries pass. The automated seven-day soak runs until at least 2026-08-31T07:43:32Z; retirement remains gated on its result."
