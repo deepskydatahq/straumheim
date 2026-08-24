@@ -1,0 +1,25 @@
+# Owner-approved M012 production values. Copy to an ignored production.tfvars
+# for local OpenTofu use, or configure equivalent protected GitHub Environment variables.
+project_id  = "propel-data-hub"
+environment = "production"
+region      = "europe-west1"
+image       = "europe-west1-docker.pkg.dev/propel-data-hub/straumheim-production/straumheim@sha256:95fe066fa2e88f9e3099842ec7afaba4fb3f4a7871b661083def041ece21c7ca"
+
+cors_allowed_origins          = ["*"] # explicitly approved for arbitrary tracking origins
+collector_domain              = "collect.partnerwithpropel.com"
+enable_production_canary      = true
+dataset_id                   = "straumheim_prod"
+delete_proof_data_on_destroy = false
+collector_min_instances      = 2
+collector_max_instances      = 10
+writer_min_instances         = 0
+writer_max_instances         = 10
+message_retention_duration   = "604800s"
+retry_minimum_backoff        = "10s"
+retry_maximum_backoff        = "600s"
+dead_letter_max_attempts     = 10
+notification_channel_ids = [
+  "projects/propel-data-hub/notificationChannels/9955997335194196354",
+]
+billing_account_id    = "01C801-F7C139-DE28E5"
+monthly_budget_amount = 200 # DKK, billing account native currency; approximately requested USD 30
