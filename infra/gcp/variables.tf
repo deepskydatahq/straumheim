@@ -33,6 +33,18 @@ variable "collector_domain" {
   default     = ""
 }
 
+variable "enable_production_canary" {
+  description = "Enable public HTTPS uptime checks and scheduled webhook canaries for the soak."
+  type        = bool
+  default     = false
+}
+
+variable "soak_canary_schedule" {
+  description = "Cloud Scheduler cron expression for production soak canaries."
+  type        = string
+  default     = "*/5 * * * *"
+}
+
 variable "dataset_id" {
   description = "Optional BigQuery dataset ID; defaults to an environment-isolated name."
   type        = string

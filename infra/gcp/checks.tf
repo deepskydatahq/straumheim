@@ -12,6 +12,13 @@ check "production_cors" {
   }
 }
 
+check "synthetic_canary_domain" {
+  assert {
+    condition     = !var.enable_production_canary || var.collector_domain != ""
+    error_message = "scheduled canaries require collector_domain."
+  }
+}
+
 check "production_destroy_safety" {
   assert {
     condition     = var.environment != "production" || !var.delete_proof_data_on_destroy

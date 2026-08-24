@@ -135,6 +135,8 @@ DNS propagation can split traffic. Use unique IDs; never infer loss from one hos
 
 Keep the previous production collector available for at least seven days after cutover. Operate from alerts, not routine dashboards or SSH. At 24 hours and seven days review canary freshness, backlog/DLQ, errors, latency, instance counts, and cost.
 
+For the managed production soak, enable the OpenTofu HTTPS uptime check and scheduled webhook canary. Confirm uptime points from Europe, USA, and Asia-Pacific remain true and query `proof_id = 'm012-production-soak'` for fresh, unique IDs. These automate evidence collection but do not waive the seven-day observation window.
+
 Only after the soak and explicit owner approval:
 
 1. verify no production DNS/traffic reaches the previous host;

@@ -7,7 +7,7 @@ public Cloud Run collector -> Pub/Sub -> private Cloud Run writer -> BigQuery
                                       -> dead-letter topic/subscription
 ```
 
-It also creates runtime identities, config secrets, Artifact Registry, Cloud Monitoring policies, and an optional budget. No service-account key is created.
+It also creates runtime identities, config secrets, Artifact Registry, Cloud Monitoring policies, and an optional budget. Production can enable a global HTTPS uptime check and five-minute Cloud Scheduler webhook canary for the soak. No service-account key is created.
 
 ## Prerequisites
 
