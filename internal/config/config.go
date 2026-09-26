@@ -47,9 +47,17 @@ type CORSConfig struct {
 
 // InputConfig holds settings for an input endpoint.
 type InputConfig struct {
-	Enabled  bool            `yaml:"enabled"`
-	Path     string          `yaml:"path"`
-	Snowplow *SnowplowConfig `yaml:"snowplow,omitempty"`
+	Enabled              bool            `yaml:"enabled"`
+	Path                 string          `yaml:"path"`
+	Snowplow             *SnowplowConfig `yaml:"snowplow,omitempty"`
+	Source               string          `yaml:"source"`
+	KeyID                string          `yaml:"key_id"`
+	Secret               string          `yaml:"secret"`
+	Vendor               string          `yaml:"vendor"`
+	Schema               string          `yaml:"schema"`
+	SchemaVersion        string          `yaml:"schema_version"`
+	PayloadSchemaVersion string          `yaml:"payload_schema_version"`
+	MaxClockSkew         time.Duration   `yaml:"max_clock_skew"`
 }
 
 // SnowplowConfig holds Snowplow-specific input configuration.

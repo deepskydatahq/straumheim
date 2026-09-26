@@ -292,6 +292,25 @@ func TestRegisterInputs(t *testing.T) {
 	engine.Close()
 }
 
+func TestValidateSourceWebhookInput(t *testing.T) {
+	valid := map[string]config.InputConfig{
+		"source_webhook": {
+			Enabled: true, Path: "/source/propel-harness", Source: "propel-harness", KeyID: "key", Secret: "secret",
+			Vendor: "propel", Schema: "harness-run", SchemaVersion: "1-0-0", PayloadSchemaVersion: "propel-harness-run-event/1.0", MaxClockSkew: 5 * time.Minute,
+		},
+	}
+	if err := validateInputConfigs(valid); err != nil {
+		t.Fatalf("valid source webhook rejected: %v", err)
+	}
+	invalid := valid
+	config := invalid["source_webhook"]
+	config.Secret = ""
+	invalid["source_webhook"] = config
+	if err := validateInputConfigs(invalid); err == nil {
+		t.Fatal("source webhook without secret unexpectedly accepted")
+	}
+}
+
 func TestRegisterInputsSnowplow(t *testing.T) {
 	r := chi.NewRouter()
 	buf := buffer.NewMemoryBuffer(100, 10, 1000000000)
