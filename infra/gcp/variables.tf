@@ -39,6 +39,24 @@ variable "enable_production_canary" {
   default     = false
 }
 
+variable "enable_propel_harness_source" {
+  description = "Enable the authenticated privacy-minimized Propel Harness source route."
+  type        = bool
+  default     = false
+}
+
+variable "propel_harness_source_key_id" {
+  description = "Non-secret key identifier expected by the Propel Harness source route."
+  type        = string
+  default     = ""
+}
+
+variable "propel_harness_source_secret_id" {
+  description = "Existing Secret Manager secret resource ID containing the source HMAC secret. The secret value is provisioned outside OpenTofu state."
+  type        = string
+  default     = ""
+}
+
 variable "soak_canary_schedule" {
   description = "Cloud Scheduler cron expression for production soak canaries."
   type        = string
