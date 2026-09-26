@@ -11,6 +11,10 @@ resource "google_secret_manager_secret" "collector_config" {
 resource "google_secret_manager_secret_version" "collector_config" {
   secret      = google_secret_manager_secret.collector_config.id
   secret_data = local.collector_config
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "google_secret_manager_secret_iam_member" "collector_reads_config" {
@@ -40,6 +44,10 @@ resource "google_secret_manager_secret" "writer_config" {
 resource "google_secret_manager_secret_version" "writer_config" {
   secret      = google_secret_manager_secret.writer_config.id
   secret_data = local.writer_config
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "google_secret_manager_secret_iam_member" "writer_reads_config" {
