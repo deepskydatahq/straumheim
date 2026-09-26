@@ -34,7 +34,7 @@ resource "google_cloud_run_v2_service" "collector" {
           value_source {
             secret_key_ref {
               secret  = var.propel_harness_source_secret_id
-              version = "latest"
+              version = var.propel_harness_source_secret_version
             }
           }
         }

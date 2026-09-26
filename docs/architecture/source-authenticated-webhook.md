@@ -23,6 +23,6 @@ The source route intentionally leaves Record IP, user-agent, and referrer empty.
 
 Example disabled configuration is in `config.example.yaml`. The secret comes from environment substitution and must be provisioned independently for client and collector. Do not commit it, log it, send it in an event, or expose it to a model.
 
-The GCP root keeps the source disabled by default. Enabling it requires a key ID and an existing Secret Manager resource ID; OpenTofu grants only the collector service account access and mounts the latest secret version as `PROPEL_HARNESS_SOURCE_SECRET`. The secret value is provisioned and rotated outside OpenTofu state.
+The GCP root keeps the source disabled by default. Enabling it requires a key ID, an existing Secret Manager resource ID, and an exact numeric secret version; OpenTofu grants only the collector service account access and mounts that version as `PROPEL_HARNESS_SOURCE_SECRET`. `latest` is refused. The secret value is provisioned and rotated outside OpenTofu state.
 
 Production enablement requires separate review of source registration, secret provisioning/rotation, collector deployment, raw-table retention, BigQuery governed-model access, canary, monitoring, and rollback.

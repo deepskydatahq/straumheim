@@ -86,6 +86,7 @@ Configure these **GitHub Environment variables** (not repository secrets contain
 | `GCP_ENABLE_PROPEL_HARNESS_SOURCE` | `true` only for an approved source proof/deployment |
 | `GCP_PROPEL_HARNESS_SOURCE_KEY_ID` | approved non-secret source key ID |
 | `GCP_PROPEL_HARNESS_SOURCE_SECRET_ID` | existing environment-specific Secret Manager secret resource ID; never its value |
+| `GCP_PROPEL_HARNESS_SOURCE_SECRET_VERSION` | exact enabled numeric secret version; never `latest` |
 | `GCP_NOTIFICATION_CHANNEL_IDS_JSON` | list of Monitoring channel IDs |
 | `GCP_BILLING_ACCOUNT_ID` | optional billing account ID |
 | `GCP_MONTHLY_BUDGET_AMOUNT` | amount in the billing account's native currency |
@@ -116,7 +117,7 @@ tofu -chdir=infra/gcp apply deploy.tfplan
 
 ## Optional authenticated Propel Harness source
 
-The source is disabled by default. A reviewed proof/production plan sets `enable_propel_harness_source=true`, a non-secret `propel_harness_source_key_id`, and `propel_harness_source_secret_id` referencing an existing Secret Manager secret. Provision and rotate the secret value outside OpenTofu state. The collector alone receives `secretAccessor`; the writer and other sources do not receive the value. Review the generated collector config to confirm that source, vendor, schema, payload version, path, and five-minute clock bound are exact before applying.
+The source is disabled by default. A reviewed proof/production plan sets `enable_propel_harness_source=true`, a non-secret `propel_harness_source_key_id`, `propel_harness_source_secret_id` referencing an existing Secret Manager secret, and an exact numeric `propel_harness_source_secret_version`. `latest` is refused so secret bytes and the deployed revision cannot drift independently. Provision and rotate the secret value outside OpenTofu state. The collector alone receives `secretAccessor`; the writer and other sources do not receive the value. Review the generated collector config to confirm that source, vendor, schema, payload version, path, and five-minute clock bound are exact before applying.
 
 ## IAM result
 

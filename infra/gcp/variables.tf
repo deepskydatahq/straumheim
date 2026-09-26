@@ -57,6 +57,12 @@ variable "propel_harness_source_secret_id" {
   default     = ""
 }
 
+variable "propel_harness_source_secret_version" {
+  description = "Exact enabled Secret Manager version containing the source HMAC secret. Never use latest for an enabled source."
+  type        = string
+  default     = ""
+}
+
 variable "soak_canary_schedule" {
   description = "Cloud Scheduler cron expression for production soak canaries."
   type        = string

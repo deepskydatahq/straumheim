@@ -23,9 +23,13 @@ check "propel_harness_source_configuration" {
   assert {
     condition = (
       !var.enable_propel_harness_source ||
-      (var.propel_harness_source_key_id != "" && var.propel_harness_source_secret_id != "")
+      (
+        var.propel_harness_source_key_id != "" &&
+        var.propel_harness_source_secret_id != "" &&
+        can(regex("^[1-9][0-9]*$", var.propel_harness_source_secret_version))
+      )
     )
-    error_message = "enabled Propel Harness source requires a key ID and an existing Secret Manager secret resource ID."
+    error_message = "enabled Propel Harness source requires a key ID, an existing Secret Manager secret resource ID, and an exact numeric secret version."
   }
 }
 

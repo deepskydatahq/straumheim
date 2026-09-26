@@ -42,6 +42,7 @@ env:
   TF_VAR_enable_propel_harness_source: ${{ vars.GCP_ENABLE_PROPEL_HARNESS_SOURCE == 'true' }}
   TF_VAR_propel_harness_source_key_id: ${{ vars.GCP_PROPEL_HARNESS_SOURCE_KEY_ID }}
   TF_VAR_propel_harness_source_secret_id: ${{ vars.GCP_PROPEL_HARNESS_SOURCE_SECRET_ID }}
+  TF_VAR_propel_harness_source_secret_version: ${{ vars.GCP_PROPEL_HARNESS_SOURCE_SECRET_VERSION }}
   TF_VAR_dataset_id: ${{ vars.GCP_DATASET_ID }}
   TF_VAR_notification_channel_ids: ${{ vars.GCP_NOTIFICATION_CHANNEL_IDS_JSON }}
   TF_VAR_billing_account_id: ${{ vars.GCP_BILLING_ACCOUNT_ID }}
