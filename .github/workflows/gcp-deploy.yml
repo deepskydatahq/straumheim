@@ -8,13 +8,22 @@ on:
         required: true
         type: choice
         options: [proof, production]
-      apply:
-        description: Apply after planning (false performs build and plan only)
+      operation:
+        description: Create an immutable plan artifact or apply one exact reviewed artifact
         required: true
-        default: false
-        type: boolean
+        type: choice
+        options: [plan, apply]
+      plan_run_id:
+        description: Workflow run ID that produced the approved plan artifact (apply only)
+        required: false
+        type: string
+      plan_sha256:
+        description: Reviewed deploy.tfplan SHA-256 (apply only)
+        required: false
+        type: string
 
 permissions:
+  actions: read
   contents: read
   id-token: write
 
@@ -22,23 +31,28 @@ concurrency:
   group: gcp-${{ inputs.environment }}
   cancel-in-progress: false
 
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID }}
+  TF_VAR_region: ${{ vars.GCP_REGION }}
+  TF_VAR_environment: ${{ inputs.environment }}
+  TF_VAR_cors_allowed_origins: ${{ vars.GCP_CORS_ALLOWED_ORIGINS_JSON }}
+  TF_VAR_collector_domain: ${{ vars.GCP_COLLECTOR_DOMAIN }}
+  TF_VAR_enable_production_canary: ${{ inputs.environment == 'production' }}
+  TF_VAR_enable_propel_harness_source: ${{ vars.GCP_ENABLE_PROPEL_HARNESS_SOURCE == 'true' }}
+  TF_VAR_propel_harness_source_key_id: ${{ vars.GCP_PROPEL_HARNESS_SOURCE_KEY_ID }}
+  TF_VAR_propel_harness_source_secret_id: ${{ vars.GCP_PROPEL_HARNESS_SOURCE_SECRET_ID }}
+  TF_VAR_dataset_id: ${{ vars.GCP_DATASET_ID }}
+  TF_VAR_notification_channel_ids: ${{ vars.GCP_NOTIFICATION_CHANNEL_IDS_JSON }}
+  TF_VAR_billing_account_id: ${{ vars.GCP_BILLING_ACCOUNT_ID }}
+  TF_VAR_monthly_budget_amount: ${{ vars.GCP_MONTHLY_BUDGET_AMOUNT }}
+  TF_VAR_delete_proof_data_on_destroy: ${{ inputs.environment == 'proof' }}
+
 jobs:
-  build-plan-deploy:
+  plan:
+    if: inputs.operation == 'plan'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
-    env:
-      TF_IN_AUTOMATION: "true"
-      TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID }}
-      TF_VAR_region: ${{ vars.GCP_REGION }}
-      TF_VAR_environment: ${{ inputs.environment }}
-      TF_VAR_cors_allowed_origins: ${{ vars.GCP_CORS_ALLOWED_ORIGINS_JSON }}
-      TF_VAR_collector_domain: ${{ vars.GCP_COLLECTOR_DOMAIN }}
-      TF_VAR_enable_production_canary: ${{ inputs.environment == 'production' }}
-      TF_VAR_dataset_id: ${{ vars.GCP_DATASET_ID }}
-      TF_VAR_notification_channel_ids: ${{ vars.GCP_NOTIFICATION_CHANNEL_IDS_JSON }}
-      TF_VAR_billing_account_id: ${{ vars.GCP_BILLING_ACCOUNT_ID }}
-      TF_VAR_monthly_budget_amount: ${{ vars.GCP_MONTHLY_BUDGET_AMOUNT }}
-      TF_VAR_delete_proof_data_on_destroy: ${{ inputs.environment == 'proof' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -84,6 +98,79 @@ jobs:
       - name: OpenTofu plan
         run: tofu -chdir=infra/gcp plan -out=deploy.tfplan
 
-      - name: OpenTofu apply
-        if: inputs.apply
-        run: tofu -chdir=infra/gcp apply -auto-approve deploy.tfplan
+      - name: Bind plan metadata
+        id: metadata
+        env:
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          plan_sha256="$(sha256sum infra/gcp/deploy.tfplan | cut -d ' ' -f 1)"
+          jq -n \
+            --arg commit "$GITHUB_SHA" \
+            --arg environment "${{ inputs.environment }}" \
+            --arg image_digest "$IMAGE_DIGEST" \
+            --arg plan_sha256 "$plan_sha256" \
+            --arg state_prefix "straumheim/${{ inputs.environment }}" \
+            '{commit:$commit,environment:$environment,image_digest:$image_digest,plan_sha256:$plan_sha256,state_prefix:$state_prefix}' \
+            > infra/gcp/plan-metadata.json
+          echo "plan_sha256=$plan_sha256" >> "$GITHUB_OUTPUT"
+          echo "### Reviewed apply identity" >> "$GITHUB_STEP_SUMMARY"
+          echo "- commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- environment: \`${{ inputs.environment }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- image digest: \`$IMAGE_DIGEST\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- plan SHA-256: \`$plan_sha256\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Store immutable plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gcp-plan-${{ inputs.environment }}-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            infra/gcp/deploy.tfplan
+            infra/gcp/plan-metadata.json
+          if-no-files-found: error
+          retention-days: 3
+
+  apply:
+    if: inputs.operation == 'apply'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Require exact reviewed plan identity
+        run: |
+          test -n "${{ inputs.plan_run_id }}"
+          test "$(printf '%s' '${{ inputs.plan_sha256 }}' | wc -c)" -eq 64
+          printf '%s' '${{ inputs.plan_sha256 }}' | grep -Eq '^[a-f0-9]{64}$'
+
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.12.1
+
+      - name: OpenTofu initialize
+        run: tofu -chdir=infra/gcp init -backend-config="bucket=${{ vars.GCP_STATE_BUCKET }}" -backend-config="prefix=straumheim/${{ inputs.environment }}"
+
+      - name: Download reviewed plan artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          artifact="gcp-plan-${{ inputs.environment }}-${GITHUB_SHA}-${{ inputs.plan_run_id }}"
+          mkdir -p infra/gcp/approved-plan
+          gh run download "${{ inputs.plan_run_id }}" --repo "$GITHUB_REPOSITORY" --name "$artifact" --dir infra/gcp/approved-plan
+
+      - name: Verify exact plan identity
+        run: |
+          metadata=infra/gcp/approved-plan/plan-metadata.json
+          plan=infra/gcp/approved-plan/deploy.tfplan
+          test "$(jq -r .commit "$metadata")" = "$GITHUB_SHA"
+          test "$(jq -r .environment "$metadata")" = "${{ inputs.environment }}"
+          test "$(jq -r .state_prefix "$metadata")" = "straumheim/${{ inputs.environment }}"
+          test "$(jq -r .plan_sha256 "$metadata")" = "${{ inputs.plan_sha256 }}"
+          echo "${{ inputs.plan_sha256 }}  $plan" | sha256sum --check --strict
+
+      - name: Apply exact reviewed OpenTofu plan
+        run: tofu -chdir=infra/gcp apply -auto-approve approved-plan/deploy.tfplan

@@ -40,11 +40,27 @@ locals {
       port = 8080
       cors = { allowed_origins = var.cors_allowed_origins }
     }
-    inputs = {
-      webhook  = { enabled = true, path = "/webhook" }
-      pixel    = { enabled = true, path = "/px" }
-      snowplow = { enabled = true, path = "/sp" }
-    }
+    inputs = merge(
+      {
+        webhook  = { enabled = true, path = "/webhook" }
+        pixel    = { enabled = true, path = "/px" }
+        snowplow = { enabled = true, path = "/sp" }
+      },
+      var.enable_propel_harness_source ? {
+        source_webhook = {
+          enabled                = true
+          path                   = "/source/propel-harness"
+          source                 = "propel-harness"
+          key_id                 = var.propel_harness_source_key_id
+          secret                 = "$${PROPEL_HARNESS_SOURCE_SECRET}"
+          vendor                 = "propel"
+          schema                 = "harness-run"
+          schema_version         = "1-0-0"
+          payload_schema_version = "propel-harness-run-event/1.0"
+          max_clock_skew         = "5m"
+        }
+      } : {}
+    )
   })
 
   writer_config = yamlencode({

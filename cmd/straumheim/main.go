@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -49,6 +50,10 @@ func run() int {
 	cfg, err := config.LoadConfig(*configPath)
 	if err != nil {
 		slog.Error("failed to load config", "path", *configPath, "error", err)
+		return 1
+	}
+	if err := validateInputConfigs(cfg.Inputs); err != nil {
+		slog.Error("invalid input configuration", "error", err)
 		return 1
 	}
 
@@ -113,7 +118,7 @@ func run() int {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: cfg.Server.CORS.AllowedOrigins,
 		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders: []string{"Content-Type"},
+		AllowedHeaders: []string{"Content-Type", "X-Straumheim-Key-Id", "X-Straumheim-Timestamp", "X-Straumheim-Event-Id", "X-Straumheim-Signature"},
 	}))
 
 	// Health check endpoint.
@@ -272,7 +277,7 @@ func newRequestScopedRouter(cfg *config.Config, reg *prometheus.Registry) *chi.M
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: cfg.Server.CORS.AllowedOrigins,
 		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders: []string{"Content-Type"},
+		AllowedHeaders: []string{"Content-Type", "X-Straumheim-Key-Id", "X-Straumheim-Timestamp", "X-Straumheim-Event-Id", "X-Straumheim-Signature"},
 	}))
 	r.Get("/health", healthHandler)
 	r.Get("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}).ServeHTTP)
@@ -406,14 +411,33 @@ func requestLogger(next http.Handler) http.Handler {
 		start := time.Now()
 		sw := &statusWriter{ResponseWriter: w, status: 200}
 		next.ServeHTTP(sw, r)
-		slog.Info("request",
+		values := []any{
 			"method", r.Method,
 			"path", r.URL.Path,
 			"status", sw.status,
 			"duration_ms", time.Since(start).Milliseconds(),
-			"remote_addr", r.RemoteAddr,
-		)
+		}
+		if !strings.HasPrefix(r.URL.Path, "/source/") {
+			values = append(values, "remote_addr", r.RemoteAddr)
+		}
+		slog.Info("request", values...)
 	})
+}
+
+func validateInputConfigs(inputs map[string]config.InputConfig) error {
+	for name, ic := range inputs {
+		if !ic.Enabled || name != "source_webhook" {
+			continue
+		}
+		_, err := input.NewSourceWebhook(input.SourceWebhookConfig{
+			Path: ic.Path, Source: ic.Source, KeyID: ic.KeyID, Secret: ic.Secret,
+			Vendor: ic.Vendor, Schema: ic.Schema, SchemaVersion: ic.SchemaVersion, PayloadSchemaVersion: ic.PayloadSchemaVersion, MaxClockSkew: ic.MaxClockSkew,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func registerInputs(r chi.Router, inputs map[string]config.InputConfig, p pipeline.Pipeline) {
@@ -426,6 +450,17 @@ func registerInputs(r chi.Router, inputs map[string]config.InputConfig, p pipeli
 			wh := input.NewWebhook()
 			wh.Register(r, p)
 			slog.Info("registered input", "name", name, "protocol", wh.Protocol())
+		case "source_webhook":
+			wh, err := input.NewSourceWebhook(input.SourceWebhookConfig{
+				Path: ic.Path, Source: ic.Source, KeyID: ic.KeyID, Secret: ic.Secret,
+				Vendor: ic.Vendor, Schema: ic.Schema, SchemaVersion: ic.SchemaVersion, PayloadSchemaVersion: ic.PayloadSchemaVersion, MaxClockSkew: ic.MaxClockSkew,
+			})
+			if err != nil {
+				slog.Error("source webhook configuration became invalid", "name", name)
+				continue
+			}
+			wh.Register(r, p)
+			slog.Info("registered input", "name", name, "protocol", wh.Protocol(), "source", ic.Source)
 		case "snowplow":
 			cfg := input.SnowplowConfig{
 				Enabled: ic.Enabled,

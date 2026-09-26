@@ -19,6 +19,16 @@ check "synthetic_canary_domain" {
   }
 }
 
+check "propel_harness_source_configuration" {
+  assert {
+    condition = (
+      !var.enable_propel_harness_source ||
+      (var.propel_harness_source_key_id != "" && var.propel_harness_source_secret_id != "")
+    )
+    error_message = "enabled Propel Harness source requires a key ID and an existing Secret Manager secret resource ID."
+  }
+}
+
 check "production_destroy_safety" {
   assert {
     condition     = var.environment != "production" || !var.delete_proof_data_on_destroy

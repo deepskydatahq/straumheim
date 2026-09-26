@@ -83,20 +83,24 @@ Configure these **GitHub Environment variables** (not repository secrets contain
 | `GCP_CORS_ALLOWED_ORIGINS_JSON` | JSON/HCL list such as `["https://app.example.com"]`; wildcard only with owner approval |
 | `GCP_COLLECTOR_DOMAIN` | verified production domain, empty for initial proof |
 | `GCP_DATASET_ID` | environment-owned BigQuery dataset ID |
+| `GCP_ENABLE_PROPEL_HARNESS_SOURCE` | `true` only for an approved source proof/deployment |
+| `GCP_PROPEL_HARNESS_SOURCE_KEY_ID` | approved non-secret source key ID |
+| `GCP_PROPEL_HARNESS_SOURCE_SECRET_ID` | existing environment-specific Secret Manager secret resource ID; never its value |
 | `GCP_NOTIFICATION_CHANNEL_IDS_JSON` | list of Monitoring channel IDs |
 | `GCP_BILLING_ACCOUNT_ID` | optional billing account ID |
 | `GCP_MONTHLY_BUDGET_AMOUNT` | amount in the billing account's native currency |
 
-The workflow requests only `contents: read` and `id-token: write`, authenticates through WIF, pushes one `linux/amd64` image, and passes the resulting `@sha256:` reference to OpenTofu. When a billing account is configured, the budget amount uses that account's actual currency rather than assuming EUR/USD. The Google provider attributes API quota to `project_id`, which is required for user-ADC bootstrap of billing APIs.
+The workflow requests `contents: read`, `actions: read`, and `id-token: write`, authenticates through WIF, and separates planning from applying. A plan run pushes one `linux/amd64` image and binds its `@sha256:` digest into an immutable OpenTofu plan artifact. When a billing account is configured, the budget amount uses that account's actual currency rather than assuming EUR/USD. The Google provider attributes API quota to `project_id`, which is required for user-ADC bootstrap of billing APIs.
 
 ## Plan and apply
 
 Run `.github/workflows/gcp-deploy.yml` manually:
 
-1. Select `proof` or `production`.
-2. Keep `apply=false` to build and review the complete plan.
-3. Re-run with `apply=true` only after environment approval.
-4. Record the image digest and OpenTofu state generation, never token/key content.
+1. Dispatch the exact commit with the environment and `operation=plan`. This publishes one immutable image and uploads a three-day plan artifact.
+2. Review the commit, environment, image digest, OpenTofu diff, state identity, workflow run ID, and reported plan SHA-256.
+3. Dispatch the same exact commit with `operation=apply`, the producing `plan_run_id`, and exact `plan_sha256` only after approval.
+4. The apply job downloads that named artifact, verifies all bound identities and bytes, and applies it without rebuilding or replanning.
+5. Record the resulting state generation, never token/key content.
 
 Local equivalent after pushing an immutable image:
 
@@ -109,6 +113,10 @@ tofu -chdir=infra/gcp plan \
   -out=deploy.tfplan
 tofu -chdir=infra/gcp apply deploy.tfplan
 ```
+
+## Optional authenticated Propel Harness source
+
+The source is disabled by default. A reviewed proof/production plan sets `enable_propel_harness_source=true`, a non-secret `propel_harness_source_key_id`, and `propel_harness_source_secret_id` referencing an existing Secret Manager secret. Provision and rotate the secret value outside OpenTofu state. The collector alone receives `secretAccessor`; the writer and other sources do not receive the value. Review the generated collector config to confirm that source, vendor, schema, payload version, path, and five-minute clock bound are exact before applying.
 
 ## IAM result
 

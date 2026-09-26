@@ -27,6 +27,19 @@ resource "google_cloud_run_v2_service" "collector" {
         value = "/etc/straumheim/config.yaml"
       }
 
+      dynamic "env" {
+        for_each = var.enable_propel_harness_source ? [1] : []
+        content {
+          name = "PROPEL_HARNESS_SOURCE_SECRET"
+          value_source {
+            secret_key_ref {
+              secret  = var.propel_harness_source_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
       ports {
         container_port = 8080
       }
@@ -78,6 +91,7 @@ resource "google_cloud_run_v2_service" "collector" {
   depends_on = [
     google_project_service.required,
     google_secret_manager_secret_iam_member.collector_reads_config,
+    google_secret_manager_secret_iam_member.collector_reads_propel_harness_source,
   ]
 }
 
