@@ -6,5 +6,10 @@
 .env.*
 bin
 straumheim
+**/.terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
 website/node_modules
 website/dist

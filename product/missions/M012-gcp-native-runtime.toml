@@ -3,7 +3,7 @@
 
 id = "M012"
 title = "GCP-native Cloud Run and Pub/Sub production runtime"
-status = "ready"
+status = "blocked"
 created = 2026-08-21
 
 [outcome]
@@ -21,6 +21,10 @@ user_progress = "From 'the BigQuery path works but accepted events can disappear
 
 [execution]
 mode = "implementation"
+blocked = 2026-08-22
+failure_reason = "Implementation, gates, disposable proof/teardown, keyless production provisioning, custom-domain TLS, and all production protocol canaries pass. The automated seven-day soak began 2026-08-24T07:43:32Z and mission completion/historical retirement remain blocked until at least 2026-08-31T07:43:32Z."
+evidence = "See docs/operations/gcp-proof.md, docs/operations/gcp-production.md, docs/operations/m012-judgment.md, and product/stories/M012-E005-S002-production-cutover.toml."
+
 
 [scope]
 in_scope = [

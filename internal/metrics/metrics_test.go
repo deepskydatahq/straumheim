@@ -40,11 +40,14 @@ func TestNewMetrics_RegistersAllCollectors(t *testing.T) {
 	}
 
 	want := map[string]bool{
-		"straumheim_records_received_total":  false,
-		"straumheim_records_delivered_total": false,
-		"straumheim_records_failed_total":    false,
-		"straumheim_buffer_size_current":     false,
-		"straumheim_flush_duration_seconds":  false,
+		"straumheim_records_received_total":          false,
+		"straumheim_records_delivered_total":         false,
+		"straumheim_records_failed_total":            false,
+		"straumheim_buffer_size_current":             false,
+		"straumheim_flush_duration_seconds":          false,
+		"straumheim_pubsub_publish_total":            false,
+		"straumheim_pubsub_push_total":               false,
+		"straumheim_last_delivery_timestamp_seconds": false,
 	}
 
 	// We need to trigger at least one observation per metric for them to appear.
@@ -54,6 +57,8 @@ func TestNewMetrics_RegistersAllCollectors(t *testing.T) {
 	m.RecordFailed("test")
 	m.SetBufferSize(0)
 	m.ObserveFlushDuration("test", time.Millisecond)
+	m.RecordPubSubPublish("webhook", "success")
+	m.RecordPubSubPush("success")
 
 	families, err = reg.Gather()
 	if err != nil {
@@ -120,6 +125,32 @@ func TestRecordFailed_IncrementsCounter(t *testing.T) {
 	val := collectCounter(m.recordsFailed.WithLabelValues("postgres"))
 	if val != 1 {
 		t.Errorf("expected 1, got %f", val)
+	}
+}
+
+func TestPubSubMetrics(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	m := NewMetrics(reg)
+
+	m.RecordPubSubPublish("", "failure")
+	m.RecordPubSubPublish("webhook", "success")
+	m.RecordPubSubPush("malformed")
+	m.RecordPubSubPush("success")
+
+	if got := collectCounter(m.pubsubPublished.WithLabelValues("unknown", "failure")); got != 1 {
+		t.Fatalf("unknown publish failures = %f, want 1", got)
+	}
+	if got := collectCounter(m.pubsubPublished.WithLabelValues("webhook", "success")); got != 1 {
+		t.Fatalf("webhook publish successes = %f, want 1", got)
+	}
+	if got := collectCounter(m.pubsubPush.WithLabelValues("malformed")); got != 1 {
+		t.Fatalf("malformed pushes = %f, want 1", got)
+	}
+	if got := collectCounter(m.pubsubPush.WithLabelValues("success")); got != 1 {
+		t.Fatalf("successful pushes = %f, want 1", got)
+	}
+	if got := collectGauge(m.lastDeliveryTime); got <= 0 {
+		t.Fatalf("last delivery timestamp = %f, want positive", got)
 	}
 }
 

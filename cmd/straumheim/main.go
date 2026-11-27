@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/deepskydatahq/straumheim/internal/input"
 	"github.com/deepskydatahq/straumheim/internal/metrics"
 	"github.com/deepskydatahq/straumheim/internal/pipeline"
+	pubsubprofile "github.com/deepskydatahq/straumheim/internal/pubsub"
 	"github.com/deepskydatahq/straumheim/internal/sink"
 )
 
@@ -48,6 +50,22 @@ func run() int {
 	cfg, err := config.LoadConfig(*configPath)
 	if err != nil {
 		slog.Error("failed to load config", "path", *configPath, "error", err)
+		return 1
+	}
+	if err := validateInputConfigs(cfg.Inputs); err != nil {
+		slog.Error("invalid input configuration", "error", err)
+		return 1
+	}
+
+	switch cfg.Runtime.Mode {
+	case "collector":
+		return runCollector(cfg)
+	case "writer":
+		return runWriter(cfg)
+	case "", "default":
+		// Continue with the portable self-hosted memory pipeline.
+	default:
+		slog.Error("invalid runtime mode", "mode", cfg.Runtime.Mode)
 		return 1
 	}
 
@@ -100,7 +118,7 @@ func run() int {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: cfg.Server.CORS.AllowedOrigins,
 		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders: []string{"Content-Type"},
+		AllowedHeaders: []string{"Content-Type", "X-Straumheim-Key-Id", "X-Straumheim-Timestamp", "X-Straumheim-Event-Id", "X-Straumheim-Signature"},
 	}))
 
 	// Health check endpoint.
@@ -160,6 +178,148 @@ func run() int {
 	}
 
 	slog.Info("shutdown complete")
+	return 0
+}
+
+func runCollector(cfg *config.Config) int {
+	if err := validateCollectorConfig(cfg); err != nil {
+		slog.Error("invalid collector configuration", "error", err)
+		return 1
+	}
+	ctx := context.Background()
+	publisher, err := pubsubprofile.NewGooglePublisherPipeline(
+		ctx,
+		cfg.Runtime.PubSub.Project,
+		cfg.Runtime.PubSub.Topic,
+	)
+	if err != nil {
+		slog.Error("failed to initialize Pub/Sub publisher", "error", err)
+		return 1
+	}
+	promReg := prometheus.NewRegistry()
+	met := metrics.NewMetrics(promReg)
+	publisher.SetObserver(met)
+	router := buildCollectorRouterWithRegistry(cfg, publisher, promReg)
+	return serveRequestScoped(cfg, router, publisher.Close)
+}
+
+func runWriter(cfg *config.Config) int {
+	if err := validateWriterConfig(cfg); err != nil {
+		slog.Error("invalid writer configuration", "error", err)
+		return 1
+	}
+	sinks, err := createSinks(cfg.Sinks)
+	if err != nil {
+		slog.Error("failed to create writer sink", "error", err)
+		return 1
+	}
+	writer := sinks[0]
+	if err := writer.Init(context.Background()); err != nil {
+		slog.Error("failed to initialize writer sink", "error", err)
+		if closeErr := writer.Close(); closeErr != nil {
+			slog.Error("failed to close writer after initialization error", "error", closeErr)
+		}
+		return 1
+	}
+	promReg := prometheus.NewRegistry()
+	met := metrics.NewMetrics(promReg)
+	router := buildWriterRouterWithRegistry(cfg, writer, met, promReg)
+	return serveRequestScoped(cfg, router, writer.Close)
+}
+
+func validateCollectorConfig(cfg *config.Config) error {
+	if cfg.Runtime.PubSub.Project == "" {
+		return fmt.Errorf("runtime.pubsub.project is required")
+	}
+	if cfg.Runtime.PubSub.Topic == "" {
+		return fmt.Errorf("runtime.pubsub.topic is required")
+	}
+	return nil
+}
+
+func validateWriterConfig(cfg *config.Config) error {
+	if cfg.Runtime.PubSub.PushPath == "" || cfg.Runtime.PubSub.PushPath[0] != '/' {
+		return fmt.Errorf("runtime.pubsub.push_path must start with /")
+	}
+	if len(cfg.Sinks) != 1 {
+		return fmt.Errorf("writer mode requires exactly one sink")
+	}
+	if cfg.Sinks[0].Type != "bigquery" {
+		return fmt.Errorf("writer mode requires a bigquery sink")
+	}
+	return nil
+}
+
+func buildCollectorRouter(cfg *config.Config, publisher pipeline.Pipeline) *chi.Mux {
+	return buildCollectorRouterWithRegistry(cfg, publisher, prometheus.NewRegistry())
+}
+
+func buildCollectorRouterWithRegistry(cfg *config.Config, publisher pipeline.Pipeline, reg *prometheus.Registry) *chi.Mux {
+	r := newRequestScopedRouter(cfg, reg)
+	registerInputs(r, cfg.Inputs, publisher)
+	return r
+}
+
+func buildWriterRouter(cfg *config.Config, writer pubsubprofile.RecordWriter) *chi.Mux {
+	return buildWriterRouterWithRegistry(cfg, writer, nil, prometheus.NewRegistry())
+}
+
+func buildWriterRouterWithRegistry(cfg *config.Config, writer pubsubprofile.RecordWriter, observer pubsubprofile.Observer, reg *prometheus.Registry) *chi.Mux {
+	r := newRequestScopedRouter(cfg, reg)
+	r.Post(cfg.Runtime.PubSub.PushPath, pubsubprofile.NewObservedPushHandler(writer, observer).ServeHTTP)
+	return r
+}
+
+func newRequestScopedRouter(cfg *config.Config, reg *prometheus.Registry) *chi.Mux {
+	r := chi.NewRouter()
+	r.Use(middleware.Recoverer)
+	r.Use(requestLogger)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: cfg.Server.CORS.AllowedOrigins,
+		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type", "X-Straumheim-Key-Id", "X-Straumheim-Timestamp", "X-Straumheim-Event-Id", "X-Straumheim-Signature"},
+	}))
+	r.Get("/health", healthHandler)
+	r.Get("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}).ServeHTTP)
+	return r
+}
+
+func serveRequestScoped(cfg *config.Config, handler http.Handler, closeFn func() error) int {
+	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
+	srv := &http.Server{Addr: addr, Handler: handler}
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
+
+	errCh := make(chan error, 1)
+	go func() {
+		slog.Info("server listening", "addr", addr, "mode", cfg.Runtime.Mode)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errCh <- err
+		}
+		close(errCh)
+	}()
+
+	select {
+	case <-ctx.Done():
+		slog.Info("shutdown signal received", "mode", cfg.Runtime.Mode)
+	case err := <-errCh:
+		if err != nil {
+			slog.Error("server error", "error", err)
+			_ = closeFn()
+			return 1
+		}
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		slog.Error("server shutdown error", "error", err)
+	}
+	if err := closeFn(); err != nil {
+		slog.Error("runtime close error", "error", err)
+		return 1
+	}
+	slog.Info("shutdown complete", "mode", cfg.Runtime.Mode)
 	return 0
 }
 
@@ -251,14 +411,33 @@ func requestLogger(next http.Handler) http.Handler {
 		start := time.Now()
 		sw := &statusWriter{ResponseWriter: w, status: 200}
 		next.ServeHTTP(sw, r)
-		slog.Info("request",
+		values := []any{
 			"method", r.Method,
 			"path", r.URL.Path,
 			"status", sw.status,
 			"duration_ms", time.Since(start).Milliseconds(),
-			"remote_addr", r.RemoteAddr,
-		)
+		}
+		if !strings.HasPrefix(r.URL.Path, "/source/") {
+			values = append(values, "remote_addr", r.RemoteAddr)
+		}
+		slog.Info("request", values...)
 	})
+}
+
+func validateInputConfigs(inputs map[string]config.InputConfig) error {
+	for name, ic := range inputs {
+		if !ic.Enabled || name != "source_webhook" {
+			continue
+		}
+		_, err := input.NewSourceWebhook(input.SourceWebhookConfig{
+			Path: ic.Path, Source: ic.Source, KeyID: ic.KeyID, Secret: ic.Secret,
+			Vendor: ic.Vendor, Schema: ic.Schema, SchemaVersion: ic.SchemaVersion, PayloadSchemaVersion: ic.PayloadSchemaVersion, MaxClockSkew: ic.MaxClockSkew,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func registerInputs(r chi.Router, inputs map[string]config.InputConfig, p pipeline.Pipeline) {
@@ -271,6 +450,17 @@ func registerInputs(r chi.Router, inputs map[string]config.InputConfig, p pipeli
 			wh := input.NewWebhook()
 			wh.Register(r, p)
 			slog.Info("registered input", "name", name, "protocol", wh.Protocol())
+		case "source_webhook":
+			wh, err := input.NewSourceWebhook(input.SourceWebhookConfig{
+				Path: ic.Path, Source: ic.Source, KeyID: ic.KeyID, Secret: ic.Secret,
+				Vendor: ic.Vendor, Schema: ic.Schema, SchemaVersion: ic.SchemaVersion, PayloadSchemaVersion: ic.PayloadSchemaVersion, MaxClockSkew: ic.MaxClockSkew,
+			})
+			if err != nil {
+				slog.Error("source webhook configuration became invalid", "name", name)
+				continue
+			}
+			wh.Register(r, p)
+			slog.Info("registered input", "name", name, "protocol", wh.Protocol(), "source", ic.Source)
 		case "snowplow":
 			cfg := input.SnowplowConfig{
 				Enabled: ic.Enabled,

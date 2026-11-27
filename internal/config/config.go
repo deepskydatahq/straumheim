@@ -13,10 +13,24 @@ var envVarRe = regexp.MustCompile(`\$\{([^}]+)\}`)
 
 // Config is the top-level configuration struct.
 type Config struct {
-	Server ServerConfig           `yaml:"server"`
-	Inputs map[string]InputConfig `yaml:"inputs"`
-	Buffer BufferConfig           `yaml:"buffer"`
-	Sinks  []SinkConfig           `yaml:"sinks"`
+	Runtime RuntimeConfig          `yaml:"runtime"`
+	Server  ServerConfig           `yaml:"server"`
+	Inputs  map[string]InputConfig `yaml:"inputs"`
+	Buffer  BufferConfig           `yaml:"buffer"`
+	Sinks   []SinkConfig           `yaml:"sinks"`
+}
+
+// RuntimeConfig selects the default self-hosted engine or a GCP request-scoped role.
+type RuntimeConfig struct {
+	Mode   string       `yaml:"mode"`
+	PubSub PubSubConfig `yaml:"pubsub"`
+}
+
+// PubSubConfig identifies the canonical topic and private push route.
+type PubSubConfig struct {
+	Project  string `yaml:"project"`
+	Topic    string `yaml:"topic"`
+	PushPath string `yaml:"push_path"`
 }
 
 // ServerConfig holds HTTP server settings.
@@ -33,9 +47,17 @@ type CORSConfig struct {
 
 // InputConfig holds settings for an input endpoint.
 type InputConfig struct {
-	Enabled  bool            `yaml:"enabled"`
-	Path     string          `yaml:"path"`
-	Snowplow *SnowplowConfig `yaml:"snowplow,omitempty"`
+	Enabled              bool            `yaml:"enabled"`
+	Path                 string          `yaml:"path"`
+	Snowplow             *SnowplowConfig `yaml:"snowplow,omitempty"`
+	Source               string          `yaml:"source"`
+	KeyID                string          `yaml:"key_id"`
+	Secret               string          `yaml:"secret"`
+	Vendor               string          `yaml:"vendor"`
+	Schema               string          `yaml:"schema"`
+	SchemaVersion        string          `yaml:"schema_version"`
+	PayloadSchemaVersion string          `yaml:"payload_schema_version"`
+	MaxClockSkew         time.Duration   `yaml:"max_clock_skew"`
 }
 
 // SnowplowConfig holds Snowplow-specific input configuration.
@@ -109,6 +131,9 @@ func substituteEnvVars(input string) string {
 }
 
 func applyDefaults(cfg *Config) {
+	if cfg.Runtime.PubSub.PushPath == "" {
+		cfg.Runtime.PubSub.PushPath = "/internal/pubsub/push"
+	}
 	if cfg.Server.Port == 0 {
 		cfg.Server.Port = 8080
 	}

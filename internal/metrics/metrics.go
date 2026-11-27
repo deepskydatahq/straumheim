@@ -14,6 +14,9 @@ type Metrics struct {
 	recordsFailed    *prometheus.CounterVec
 	bufferSize       prometheus.Gauge
 	flushDuration    *prometheus.HistogramVec
+	pubsubPublished  *prometheus.CounterVec
+	pubsubPush       *prometheus.CounterVec
+	lastDeliveryTime prometheus.Gauge
 }
 
 // NewMetrics creates a Metrics instance and registers all collectors with reg.
@@ -44,6 +47,21 @@ func NewMetrics(reg prometheus.Registerer) *Metrics {
 			Help:    "Duration of flush operations per sink.",
 			Buckets: prometheus.DefBuckets,
 		}, []string{"sink"}),
+
+		pubsubPublished: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "straumheim_pubsub_publish_total",
+			Help: "Confirmed collector Pub/Sub publish outcomes by protocol and result.",
+		}, []string{"protocol", "result"}),
+
+		pubsubPush: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "straumheim_pubsub_push_total",
+			Help: "Pub/Sub push processing outcomes by result.",
+		}, []string{"result"}),
+
+		lastDeliveryTime: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "straumheim_last_delivery_timestamp_seconds",
+			Help: "Unix timestamp of the most recent confirmed request-scoped destination delivery.",
+		}),
 	}
 
 	reg.MustRegister(m.recordsReceived)
@@ -51,6 +69,9 @@ func NewMetrics(reg prometheus.Registerer) *Metrics {
 	reg.MustRegister(m.recordsFailed)
 	reg.MustRegister(m.bufferSize)
 	reg.MustRegister(m.flushDuration)
+	reg.MustRegister(m.pubsubPublished)
+	reg.MustRegister(m.pubsubPush)
+	reg.MustRegister(m.lastDeliveryTime)
 
 	return m
 }
@@ -78,4 +99,20 @@ func (m *Metrics) SetBufferSize(n int) {
 // ObserveFlushDuration records a flush duration observation for the given sink.
 func (m *Metrics) ObserveFlushDuration(sink string, d time.Duration) {
 	m.flushDuration.WithLabelValues(sink).Observe(d.Seconds())
+}
+
+// RecordPubSubPublish records one canonical Record publish outcome.
+func (m *Metrics) RecordPubSubPublish(protocol, result string) {
+	if protocol == "" {
+		protocol = "unknown"
+	}
+	m.pubsubPublished.WithLabelValues(protocol, result).Inc()
+}
+
+// RecordPubSubPush records one push request processing outcome.
+func (m *Metrics) RecordPubSubPush(result string) {
+	m.pubsubPush.WithLabelValues(result).Inc()
+	if result == "success" {
+		m.lastDeliveryTime.SetToCurrentTime()
+	}
 }

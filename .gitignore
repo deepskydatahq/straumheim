@@ -7,6 +7,15 @@ straumheim
 config.test.yaml
 /tmp/
 
+# OpenTofu / Terraform local state and credentials
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+*.tfplan
+crash.log
+
 # IDE
 .idea/
 .vscode/

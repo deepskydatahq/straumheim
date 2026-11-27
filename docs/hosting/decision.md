@@ -1,8 +1,10 @@
 # Hosting decision: Render Starter in Frankfurt
 
-- **Status:** validated by disposable Free proof; paid Starter smoke test and production cutover approval remain
+- **Status:** historical M008 decision; Render proofs passed and all Render resources are de-provisioned
 - **Date:** 2026-08-20
-- **Mission:** M008
+- **Mission:** M008; production direction superseded by M012
+
+> **2026-08-21 architecture shift:** M012 moves the optional managed production profile to Cloud Run, Pub/Sub, and BigQuery. Render was correct for the timer-driven in-memory pipeline evaluated here. Confirmed Pub/Sub publish and request-scoped push delivery remove the background-CPU assumption that rejected request-based Cloud Run. See [GCP request-scoped delivery](../architecture/gcp-request-scoped-delivery.md) and the [GCP runbook](../operations/gcp-runbook.md). Keep this document as decision history, not current cutover approval.
 
 ## Decision
 
